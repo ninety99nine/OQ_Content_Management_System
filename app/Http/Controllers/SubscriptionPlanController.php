@@ -11,124 +11,104 @@ use Illuminate\Support\Facades\Validator;
 
 class SubscriptionPlanController extends Controller
 {
-    public function index(Project $project){
+    public function index(Project $project)
+    {
+        //  Get the subscriptions
+        $totalSubscriptions = $project->subscriptions()->count();
 
-        if( $project ){
+        //  Get the subscription plans
+        $subscriptionPlans = $project->subscriptionPlans()->latest()->withCount('subscriptions')->paginate(10);
 
-            //  Get the subscriptions
-            $totalSubscriptions = $project->subscriptions()->count();
-
-            //  Get the subscription plans
-            $subscriptionPlans = $project->subscriptionPlans()->latest()->withCount('subscriptions')->paginate(10);
-
-            //  Render the subscription plans view
-            return Inertia::render('SubscriptionPlans/List/Main', [
-                'totalSubscriptions' => $totalSubscriptions,
-                'subscriptionPlansPayload' => $subscriptionPlans
-            ]);
-
-        }
-
+        //  Render the subscription plans view
+        return Inertia::render('SubscriptionPlans/List/Main', [
+            'totalSubscriptions' => $totalSubscriptions,
+            'subscriptionPlansPayload' => $subscriptionPlans
+        ]);
     }
 
-    public function create(Request $request, Project $project){
+    public function create(Request $request, Project $project)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:3', 'max:20', Rule::unique('subscription_plans')->where(function ($query) use ($request, $project) {
 
-        if( $project ){
+                //  Make sure that this project does not already have this subscription plan
+                return $query->where('name', $request->input('name'))->where('project_id', $project->id);
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'name' => ['required', 'string', 'min:3', 'max:20', Rule::unique('subscription_plans')->where(function ($query) use ($request, $project) {
+            })],
+            'price' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'frequency' => ['required', 'string'],
+            'duration' => ['required', 'integer']
+        ])->validate();
 
-                    //  Make sure that this project does not already have this language
-                    return $query->where('name', $request->input('name'))->where('project_id', $project->id);
+        //  Set name
+        $name = $request->input('name');
 
-                })],
-                'price' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
-                'frequency' => ['required', 'string'],
-                'duration' => ['required', 'integer']
-            ])->validate();
+        //  Set price
+        $price = $request->input('price');
 
-            //  Set name
-            $name = $request->input('name');
+        //  Set frequency
+        $duration = $request->input('duration');
 
-            //  Set price
-            $price = $request->input('price');
+        //  Set frequency
+        $frequency = $request->input('frequency');
 
-            //  Set frequency
-            $duration = $request->input('duration');
+        //  Create new subscription plan
+        SubscriptionPlan::create([
+            'name' => $name,
+            'price' => $price,
+            'duration' => $duration,
+            'frequency' => $frequency,
+            'project_id' => $project->id,
+        ]);
 
-            //  Set frequency
-            $frequency = $request->input('frequency');
-
-            //  Create new subscription plan
-            SubscriptionPlan::create([
-                'name' => $name,
-                'price' => $price,
-                'duration' => $duration,
-                'frequency' => $frequency,
-                'project_id' => $project->id,
-            ]);
-
-            return redirect()->back()->with('message', 'Created Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Created Successfully');
     }
 
-    public function update(Request $request, Project $project, $subscription_plan_id){
+    public function update(Request $request, Project $project, SubscriptionPlan $subscription_plan)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:3', 'max:20', Rule::unique('subscription_plans')->where(function ($query) use ($request, $project) {
 
-        if( $project ){
+                //  Make sure that this project does not already have this subscription plan name
+                return $query->where('name', $request->input('name'))->where('project_id', $project->id);
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'name' => ['required', 'string', 'min:3', 'max:20', Rule::unique('subscription_plans')->where(function ($query) use ($request, $project) {
+            })],
+            'price' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'frequency' => ['required', 'string'],
+            'duration' => ['required', 'integer']
+        ])->validate();
 
-                    //  Make sure that this project does not already have this subscription plan name
-                    return $query->where('name', $request->input('name'))->where('project_id', $project->id);
+        //  Set name
+        $name = $request->input('name');
 
-                })],
-                'price' => ['required', 'regex:/^\d+(\.\d{1,2})?$/'],
-                'frequency' => ['required', 'string'],
-                'duration' => ['required', 'integer']
-            ])->validate();
+        //  Set price
+        $price = $request->input('price');
 
-            //  Set name
-            $name = $request->input('name');
+        //  Set frequency
+        $duration = $request->input('duration');
 
-            //  Set price
-            $price = $request->input('price');
+        //  Set frequency
+        $frequency = $request->input('frequency');
 
-            //  Set frequency
-            $duration = $request->input('duration');
+        //  Update existing subscription plan
+        $subscription_plan->update([
+            'name' => $name,
+            'price' => $price,
+            'duration' => $duration,
+            'frequency' => $frequency,
+            'project_id' => $project->id,
+        ]);
 
-            //  Set frequency
-            $frequency = $request->input('frequency');
-
-            //  Update existing subscription plan
-            SubscriptionPlan::findOrFail($subscription_plan_id)->update([
-                'name' => $name,
-                'price' => $price,
-                'duration' => $duration,
-                'frequency' => $frequency,
-                'project_id' => $project->id,
-            ]);
-
-            return redirect()->back()->with('message', 'Updated Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Updated Successfully');
     }
 
-    public function delete(Project $project, $subscription_plan_id){
+    public function delete(Project $project, SubscriptionPlan $subscription_plan)
+    {
+        //  Delete subscription plan
+        $subscription_plan->delete();
 
-        if( $project ){
-
-            //  Delete subscription plan
-            SubscriptionPlan::findOrFail($subscription_plan_id)->delete();
-
-            return redirect()->back()->with('message', 'Deleted Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Deleted Successfully');
     }
 }

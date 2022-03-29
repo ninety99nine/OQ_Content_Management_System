@@ -51,7 +51,7 @@
                                 </td>
                                 <!-- Last Subscription -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ getLastSubscriptionDate(subscriber.lastest_subscriptions) }}
+                                    {{ getLastSubscriptionDate(subscriber.latest_subscriptions) }}
                                 </td>
                                 <!-- Messages -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
@@ -63,7 +63,7 @@
                                 </td>
                                 <!-- Last Message -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ getLastMessageDate(subscriber.lastest_messages) }}
+                                    {{ getLastMessageDate(subscriber.latest_messages) }}
                                 </td>
                                 <!-- Created Date -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -121,20 +121,20 @@
             }
         },
         methods: {
-            getLastSubscriptionDate(lastestSubscriptions){
-                if( lastestSubscriptions.length > 0 ){
-                    if( lastestSubscriptions[0].created_at ){
-                        return this.moment(lastestSubscriptions[0].created_at).fromNow();
+            getLastSubscriptionDate(latestSubscriptions){
+                if( latestSubscriptions.length > 0 ){
+                    if( latestSubscriptions[0].created_at ){
+                        return this.moment(latestSubscriptions[0].created_at).fromNow();
                     }
                 }
 
                 return '...';
             },
-            getLastMessageDate(lastestMessages){
-                if( lastestMessages.length > 0 ){
-                    if( lastestMessages[0].pivot ){
-                        if( lastestMessages[0].pivot.created_at ){
-                            return this.moment(lastestMessages[0].pivot.created_at).fromNow();
+            getLastMessageDate(latestMessages){
+                if( latestMessages.length > 0 ){
+                    if( latestMessages[0].pivot ){
+                        if( latestMessages[0].pivot.created_at ){
+                            return this.moment(latestMessages[0].pivot.created_at).fromNow();
                         }
                     }
                 }

@@ -16,8 +16,12 @@ class CreateMessagesTable extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->string('content', 500)->nullable();
-            $table->unsignedInteger('language_id');
             $table->unsignedInteger('project_id');
+            /**
+             *  The nestedSet() method is required to handle nested relationships
+             *  Refer to: https://github.com/lazychaser/laravel-nestedset
+             */
+            $table->nestedSet();
             $table->timestamps();
         });
     }

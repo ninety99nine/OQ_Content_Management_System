@@ -4,60 +4,41 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Topic;
 use App\Models\Project;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Database\Eloquent\Builder;
 
 class TopicController extends Controller
 {
-    public function get (Request $request, Project $project, $topic = null)
+    public function get (Project $project)
     {
-        $withSubTopics = request()->input('withSubTopics') === '1';
-        $language = request()->input('language');
+        $searchWord = request()->input('search');
 
-        if( !is_null($topic)){
-
-            $topics = $project->topics()->where('id', $topic)->first()->subTopics();
-
-        }else{
-
-            $topics = $project->topics()->whereNull('parent_topic_id');
-
-        }
-
-        if( $withSubTopics ){
-
-            $topics = $topics->with('subTopics');
-
-        }else{
-
-            $topics = $topics->withCount('subTopics');
-
-        }
-
-        if( $language ){
-
-            $topics = $topics->whereHas('language', function (Builder $query) use ($language) {
-                $query->where('name', $language);
-            });
-
-        }
-
-        return $topics->paginate();
+        return $project->topics()->whereIsRoot()->withCount('children')->search($searchWord)->latest()->paginate();
     }
 
-    public function show (Project $project, $topic)
+    public function show (Project $project, Topic $topic, $type = null)
     {
-        $withSubTopics = request()->input('withSubTopics') === '1';
+        $searchWord = request()->input('search');
 
-        $topic = $project->topics()->where('id', $topic);
+        if( $type == 'children') {
 
-        if( $withSubTopics ){
+            return $topic->children()->withCount('children')->search($searchWord)->latest()->paginate();
 
-            $topic = $topic->with('subTopics');
+        }else if( $type == 'descendants') {
+
+            return $topic->descendants()->withCount('descendants')->search($searchWord)->latest()->paginate();
+
+        }else if( $type == 'ancestors') {
+
+            return $topic->ancestors()->withCount('ancestors')->search($searchWord)->latest()->paginate();
+
+        }else if( $type == 'parent') {
+
+            return $topic->parent;
+
+        }else{
+
+            return $topic;
 
         }
-
-        return $topic->first();
     }
 }

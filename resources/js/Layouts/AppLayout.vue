@@ -27,13 +27,13 @@
                             <template v-if="route().params.project">
 
                                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                    <jet-nav-link :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project })">
+                                    <jet-nav-link :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project }) || route().current('show-topic', { project: route().params.project, topic: route().params.topic })">
                                         Topics
                                     </jet-nav-link>
                                 </div>
 
                                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                    <jet-nav-link :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project })">
+                                    <jet-nav-link :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project }) || route().current('show-message', { project: route().params.project, message: route().params.message })">
                                         Messages
                                     </jet-nav-link>
                                 </div>
@@ -59,12 +59,6 @@
                                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                     <jet-nav-link :href="route('subscription-plans', { project: route().params.project })" :active="route().current('subscription-plans', { project: route().params.project })">
                                         Subscription Plans
-                                    </jet-nav-link>
-                                </div>
-
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                    <jet-nav-link :href="route('languages', { project: route().params.project })" :active="route().current('languages', { project: route().params.project })">
-                                        Languages
                                     </jet-nav-link>
                                 </div>
 
@@ -196,10 +190,10 @@
 
                         <template v-if="route().params.project">
 
-                            <jet-responsive-nav-link :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project })">
+                            <jet-responsive-nav-link :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project }) || route().current('show-topic', { project: route().params.project, topic: route().params.topic })">
                                 Topics
                             </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project })">
+                            <jet-responsive-nav-link :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project }) || route().current('show-message', { project: route().params.project, message: route().params.message })">
                                 Messages
                             </jet-responsive-nav-link>
                             <jet-responsive-nav-link :href="route('campaigns', { project: route().params.project })" :active="route().current('campaigns', { project: route().params.project })">
@@ -213,9 +207,6 @@
                             </jet-responsive-nav-link>
                             <jet-responsive-nav-link :href="route('subscription-plans', { project: route().params.project })" :active="route().current('subscription-plans', { project: route().params.project })">
                                 Subscription Plans
-                            </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('languages', { project: route().params.project })" :active="route().current('languages', { project: route().params.project })">
-                                Languages
                             </jet-responsive-nav-link>
 
                         </template>

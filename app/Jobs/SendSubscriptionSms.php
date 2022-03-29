@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Campaign;
 use App\Models\Message;
 use App\Models\Subscriber;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ class SendSubscriptionSms implements ShouldQueue, ShouldBeUnique
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $subscriber;
+    public $campaign;
     public $message;
 
     /**
@@ -42,9 +44,10 @@ class SendSubscriptionSms implements ShouldQueue, ShouldBeUnique
      *
      * @return void
      */
-    public function __construct(Subscriber $subscriber, Message $message)
+    public function __construct(Subscriber $subscriber, Message $message, Campaign $campaign)
     {
         $this->subscriber = $subscriber;
+        $this->campaign = $campaign;
         $this->message = $message;
 
     }
@@ -79,11 +82,21 @@ class SendSubscriptionSms implements ShouldQueue, ShouldBeUnique
                 ->sendMessage($message);
             */
 
-            //  Record message success
+            //  Record message sent
             DB::table('subscriber_messages')->insert([
                 'project_id' => $this->message->project_id,
                 'subscriber_id' => $this->subscriber->id,
                 'message_id' => $this->message->id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+            //  Record the next message date and time
+            DB::table('campaign_next_message_schedule')->insert([
+                'next_message_date' => $this->campaign->nextMessageDate(),
+                'project_id' => $this->message->project_id,
+                'subscriber_id' => $this->subscriber->id,
+                'campaign_id' => $this->campaign->id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);

@@ -5,17 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Kalnoy\Nestedset\NodeTrait;
 
 class Message extends Model
 {
-    use HasFactory;
+    use HasFactory, NodeTrait;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['content', 'language_id', 'project_id'];
+    protected $fillable = ['content', 'project_id'];
+
+    public function scopeSearch($query, $searchWord)
+    {
+        if( !empty( $searchWord ) ){
+
+            return $query->where('content', 'like', '%'.$searchWord.'%');
+
+        }
+
+        return $query;
+    }
 
     /**
      * Get the project associated with the message.
@@ -23,14 +35,6 @@ class Message extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
-    }
-
-    /**
-     * Get the language associated with the message.
-     */
-    public function language()
-    {
-        return $this->belongsTo(Language::class);
     }
 
     /**
@@ -51,7 +55,7 @@ class Message extends Model
             //  before delete() method call this
             static::deleting(function ($message) {
 
-                //  Delete all records of users being assigned to this project
+                //  Delete all records of messages being assigned to users
                 DB::table('subscriber_messages')->where(['message_id' => $message->id])->delete();
 
                 // do the rest of the cleanup...

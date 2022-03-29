@@ -25,7 +25,6 @@
             CreateSubscriberModal
         },
         props: {
-            languages: Array,
             totalMessages: Number,
             subscribersPayload: Object
         }

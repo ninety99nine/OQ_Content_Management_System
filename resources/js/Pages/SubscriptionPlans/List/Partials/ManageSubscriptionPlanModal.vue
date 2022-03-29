@@ -304,7 +304,7 @@
                     },
                 };
 
-                this.form.put(route('update-subscription-plan', { project: route().params.project, subscription_plan_id: this.subscriptionPlan.id }), options);
+                this.form.put(route('update-subscription-plan', { project: route().params.project, subscription_plan: this.subscriptionPlan.id }), options);
             },
             destroy() {
 
@@ -325,7 +325,7 @@
                     },
                 };
 
-                this.form.delete(route('delete-subscription-plan', { project: route().params.project, subscription_plan_id: this.subscriptionPlan.id }), options);
+                this.form.delete(route('delete-subscription-plan', { project: route().params.project, subscription_plan: this.subscriptionPlan.id }), options);
             },
             handleOnSuccess(){
 

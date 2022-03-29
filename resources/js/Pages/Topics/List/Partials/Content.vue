@@ -2,7 +2,7 @@
 
     <div>
 
-        <manage-topic-modal v-model="isShowingModal" :action="modalAction" :topic="topic" :parentTopic="parentTopic" :selectedLanguage="selectedLanguage" :languages="languages" />
+        <manage-topic-modal v-model="isShowingModal" :action="modalAction" :topic="topic" :parentTopic="parentTopic" :breadcrumbs="breadcrumbs" />
 
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
 
@@ -20,15 +20,6 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <span>Content</span>
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
-                                <span>Sub-Topics</span>
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                                <span>Readers</span>
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
-                                <span>% Readers</span>
-                            </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-right">
                                 <span>Actions</span>
                             </th>
@@ -44,25 +35,8 @@
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900">{{ topic.content }}</div>
                                 </td>
-                                <!-- Total Sub Topics -->
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                    <span class="text-2xl">{{ topic.sub_topics_count }}</span>
-                                </td>
-                                <!-- Total Seen -->
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                    <template v-if="topic.parent_topic_id">
-                                        <span class="text-2xl">{{ topic.subscribers_count }}</span>
-                                        <span class="text-gray-400"> / {{ totalSubscribers }}</span>
-                                    </template>
-                                    <span v-else class="text-gray-400">N/A</span>
-                                </td>
-                                <!-- Percentage -->
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                    <span v-if="topic.parent_topic_id" class="text-lg text-green-600">{{ getPercentageOfCoverage(topic.subscribers_count) }}%</span>
-                                    <span v-else class="text-gray-400">N/A</span>
-                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" @click.prevent="$inertia.get(route('topics', { project: route().params.project, topic: topic.id, _query: { language: showTopicsForSelectedLanguageName } }))" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                    <a href="#" @click.prevent="$inertia.get(route('show-topic', { project: route().params.project, topic: topic.id }))" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
                                     <a href="#" @click.prevent="showModal(topic, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                                     <a href="#" @click.prevent="showModal(topic, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
                                 </td>
@@ -74,8 +48,6 @@
                                     <div class="text-center text-gray-900 text-sm p-6">No topics</div>
                                 </td>
                             </tr>
-
-
                         </tbody>
                     </table>
                     </div>
@@ -103,15 +75,12 @@
             ManageTopicModal, Pagination
         },
         props: {
-            languages: Array,
             parentTopic: Object,
             topicsPayload: Object,
-            selectedLanguage: Object,
-            totalSubscribers: Number,
+            breadcrumbs: Array
         },
         data() {
             return {
-                showTopicsForSelectedLanguageName: (this.selectedLanguage || {}).name,
                 isShowingModal: false,
                 modalAction: null,
                 topic: null,
@@ -123,28 +92,6 @@
                 this.topic = topic;
                 this.modalAction = action;
                 this.isShowingModal = true
-            },
-            getLanguageColor(language){
-                if( language.name == 'English' ){
-
-                    return 'green';
-
-                }else if( language.name == 'Setswana' ){
-
-                    return 'blue';
-
-                }else{
-
-                    return 'lime';
-
-                }
-            },
-            getPercentageOfCoverage(subscribersCount){
-                if( this.totalSubscribers > 0 ){
-                    return Math.round((subscribersCount / this.totalSubscribers) * 100)
-                }
-
-                return 0;
             }
         }
     })

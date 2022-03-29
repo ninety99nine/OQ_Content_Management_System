@@ -3,9 +3,9 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                <manage-message-modal :showAddbutton="true" :languages="languages" />
+                <manage-message-modal :parentMessage="parentMessage" :messagesPayload="messagesPayload" :breadcrumbs="breadcrumbs" :showHeader="true" />
 
-                <messages-content :messagesPayload="messagesPayload" :languages="languages" :totalSubscribers="totalSubscribers" />
+                <messages-content :parentMessage="parentMessage" :messagesPayload="messagesPayload" :breadcrumbs="breadcrumbs" />
 
             </div>
         </div>
@@ -25,9 +25,9 @@
             ManageMessageModal
         },
         props: {
-            languages: Array,
+            parentMessage: Object,
             messagesPayload: Object,
-            totalSubscribers: Number,
+            breadcrumbs: Array
         }
     })
 </script>

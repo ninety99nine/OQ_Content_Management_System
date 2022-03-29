@@ -29,10 +29,10 @@ class Subscriber extends Model
     public function scopeHasReceivedMessage($query)
     {
         /**
-         *  Question: Do we have a dmessage that was created
+         *  Question: Do we have a message that was created
          *  between now and 24 hours ago?
          *
-         *  If we do then we have received our dmessage
+         *  If we do then we have received our message
          */
         return $query->whereHas('messages', function (Builder $query) {
 
@@ -45,10 +45,10 @@ class Subscriber extends Model
     public function scopeHasNotReceivedMessage($query)
     {
         /**
-         *  Question: Do we have a dmessage that was created
+         *  Question: Do we have a message that was created
          *  between now and 24 hours ago?
          *
-         *  If we don't then we have not received our dmessage
+         *  If we don't then we have not received our message
          */
         return $query->whereDoesntHave('messages', function (Builder $query) {
 
@@ -67,19 +67,38 @@ class Subscriber extends Model
     }
 
     /**
-     * Get the dmessages that this subscriber received
+     * Get the messages that this subscriber received
      */
     public function messages()
     {
-        return $this->belongsToMany(Message::class, 'subscriber_messages')->withTimestamps();
+        return $this->belongsToMany(Message::class, 'subscriber_messages')
+                    ->withTimestamps();
     }
 
     /**
-     * Get the lastest dmessage that this subscriber received
+     * Get the latest message that this subscriber received
      */
-    public function lastestMessages()
+    public function latestMessages()
     {
         return $this->messages()->latest();
+    }
+
+    /**
+     * Get the topics that this subscriber received
+     */
+    public function topics()
+    {
+        return $this->belongsToMany(Message::class, 'subscriber_topics')
+                    ->using(SubscriberTopic::class)
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the latest topic that this subscriber read
+     */
+    public function latestTopics()
+    {
+        return $this->topics()->latest();
     }
 
     /**
@@ -99,9 +118,9 @@ class Subscriber extends Model
     }
 
     /**
-     * Get the lastest subscription that this subscriber received
+     * Get the latest subscription that this subscriber received
      */
-    public function lastestSubscriptions()
+    public function latestSubscriptions()
     {
         return $this->subscriptions()->latest();
     }    //  ON DELETE EVENT

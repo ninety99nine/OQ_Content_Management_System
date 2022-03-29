@@ -17,9 +17,12 @@ class CreateTopicsTable extends Migration
             $table->id();
             $table->string('title', 100)->nullable();
             $table->string('content', 5000)->nullable();
-            $table->unsignedInteger('parent_topic_id')->nullable();
-            $table->unsignedInteger('language_id');
             $table->unsignedInteger('project_id');
+            /**
+             *  The nestedSet() method is required to handle nested relationships
+             *  Refer to: https://github.com/lazychaser/laravel-nestedset
+             */
+            $table->nestedSet();
             $table->timestamps();
         });
     }

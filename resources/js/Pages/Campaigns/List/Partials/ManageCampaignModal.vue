@@ -67,45 +67,107 @@
                         </div>
 
                         <!-- Description -->
-                        <div class="mb-4">
+                        <div class="mb-8">
                             <jet-label for="description" value="Description" />
                             <jet-textarea id="description" class="mt-1 block w-full" v-model="form.description" />
                             <jet-input-error :message="form.errors.description" class="mt-2" />
                         </div>
 
-                        <div class="mt-10 mb-10">
+                        <div class="mb-8">
 
-                            <el-divider content-position="left"><span class="font-semibold">Schedule</span></el-divider>
+                            <el-divider content-position="left"><span class="font-semibold">Timing</span></el-divider>
+
+                            <span class="block text-sm text-gray-500 mb-4">Decide when to send messages e.g send now, send later or send recurring (every 1 week)</span>
+
+                            <el-select v-model="form.schedule_type" placeholder="Select schedule type" size="large">
+                                <el-option v-for="option in scheduleTypeOptions" :key="option" :label="option" :value="option" > </el-option>
+                            </el-select>
 
                         </div>
 
-                        <!-- Frequency -->
-                        <div class="mb-4">
+                        <div v-if="isSendingLater || isSendingRecurring" class="mb-8">
 
-                            <div class="flex items-center">
+                            <el-divider content-position="left"><span class="font-semibold mb-4">Schedule</span></el-divider>
+
+                            <span class="block text-sm text-gray-500 mb-4">
+                                {{ isSendingLater ? 'Decide on the date and time that the message must be sent' : 'Decide on the frequency that messages must be sent' }}
+                            </span>
+
+                            <!-- Recurring Frequency & Duration -->
+                            <div v-if="isSendingRecurring" class="flex items-center mb-4">
 
                                 <span class="block whitespace-nowrap text-sm text-gray-700 mr-4">Send every</span>
 
                                 <div class="mr-4">
-                                    <el-input-number v-model="form.duration" :min="1" controls-position="right" />
-                                    <jet-input-error :message="form.errors.duration" />
+                                    <el-input-number v-model="form.recurring_duration" :min="1" controls-position="right" />
+                                    <jet-input-error :message="form.errors.recurring_duration" />
                                 </div>
 
                                 <div class="w-full">
-                                    <el-select v-model="form.frequency" clearable placeholder="Select frequency" class="w-full">
+                                    <el-select v-model="form.recurring_frequency" clearable placeholder="Select frequency" class="w-full">
                                         <el-option v-for="option in frequencyOptions" :key="option.value" :label="option.name" :value="option.value" ></el-option>
                                     </el-select>
-                                    <jet-input-error :message="form.errors.frequency" />
+                                    <jet-input-error :message="form.errors.recurring_frequency" />
                                 </div>
 
                             </div>
 
-                        </div>
-
-                        <!-- Days Of The Week -->
-                        <div class="mb-4">
-
+                            <!-- Date -->
                             <div class="flex items-center">
+
+                                <div>
+                                    <div class="flex items-center">
+
+                                        <span class="block text-sm text-gray-700 mr-4">{{ isSendingLater ? 'Send date' : 'Date from' }}</span>
+
+                                        <el-date-picker v-model="form.start_date" type="date" value-format="YYYY-MM-DD 00:00:00" format="DD MMM YYYY" placeholder="Start date"></el-date-picker>
+
+                                    </div>
+                                    <jet-input-error :message="form.errors.start_date" />
+                                </div>
+
+                                <div v-if="isSendingRecurring">
+                                    <div class="flex items-center">
+
+                                        <span class="block text-sm text-gray-700 ml-4 mr-4">To</span>
+
+                                        <el-date-picker v-model="form.end_date" type="date" value-format="YYYY-MM-DD 00:00:00" format="DD MMM YYYY" placeholder="End date"></el-date-picker>
+
+                                    </div>
+                                    <jet-input-error :message="form.errors.end_date" />
+                                </div>
+
+                            </div>
+
+                            <!-- Time -->
+                            <div :class="['flex', 'items-center', 'mt-4', 'mb-4']">
+
+                                <div>
+                                    <div class="flex items-center">
+
+                                        <span class="block text-sm text-gray-700 mr-4">{{ isSendingLater ? 'Send time' : 'Time from' }}</span>
+
+                                        <el-time-select v-model="form.start_time" :max-time="form.end_time" placeholder="Start time" start="06:00" step="00:15" end="18:00"></el-time-select>
+
+                                    </div>
+                                    <jet-input-error :message="form.errors.start_time" />
+                                </div>
+
+                                <div v-if="isSendingRecurring">
+                                    <div class="flex items-center">
+
+                                        <span class="block text-sm text-gray-700 ml-4 mr-4">To</span>
+
+                                        <el-time-select v-model="form.end_time" :min-time="form.start_time" placeholder="End time" start="06:00" step="00:15" end="18:00"></el-time-select>
+
+                                    </div>
+                                    <jet-input-error :message="form.errors.end_time" />
+                                </div>
+
+                            </div>
+
+                            <!-- Recurring Days Of The Week -->
+                            <div v-if="isSendingRecurring" class="flex items-center">
 
                                 <span class="block whitespace-nowrap text-sm text-gray-700 mr-4">On</span>
 
@@ -115,54 +177,6 @@
                                     </el-select>
                                     <jet-input-error :message="form.errors.days_of_the_week" />
                                 </div>
-
-                            </div>
-
-                        </div>
-
-                        <!-- Date -->
-                        <div class="grid grid-cols-2 mb-4">
-
-                            <div>
-                                <div class="flex items-center">
-
-                                    <span class="block text-sm text-gray-700 mr-4">Date from</span>
-
-                                    <el-date-picker v-model="form.start_date" type="date" value-format="YYYY-MM-DD 00:00:00" format="DD MMM YYYY" placeholder="Start date"></el-date-picker>
-
-                                </div>
-                                <jet-input-error :message="form.errors.start_date" />
-                            </div>
-
-                            <div>
-                                <div class="flex items-center">
-
-                                    <span class="block text-sm text-gray-700 ml-4 mr-4">To</span>
-
-                                    <el-date-picker v-model="form.end_date" type="date" value-format="YYYY-MM-DD 00:00:00" format="DD MMM YYYY" placeholder="End date"></el-date-picker>
-
-                                </div>
-                                <jet-input-error :message="form.errors.end_date" />
-                            </div>
-
-                        </div>
-
-                        <!-- Time -->
-                        <div class="grid grid-cols-2">
-
-                            <div class="flex items-center">
-
-                                <span class="block text-sm text-gray-700 mr-4">Time from</span>
-
-                                <el-time-select v-model="form.start_time" :max-time="form.end_time" placeholder="Start time" start="06:00" step="00:15" end="18:00"></el-time-select>
-
-                            </div>
-
-                            <div class="flex items-center">
-
-                                <span class="block text-sm text-gray-700 ml-4 mr-4">To</span>
-
-                                <el-time-select v-model="form.end_time" :min-time="form.start_time" placeholder="End time" start="06:00" step="00:15" end="18:00"></el-time-select>
 
                             </div>
 
@@ -191,25 +205,25 @@
 
                         <div class="mt-10 mb-10">
 
-                            <el-divider content-position="left"><span class="font-semibold">Messages / Topics</span></el-divider>
+                            <el-divider content-position="left"><span class="font-semibold">Messages</span></el-divider>
 
                         </div>
 
                         <!-- Message Categories -->
                         <div>
 
-                            <span class="block text-sm text-gray-500 mb-4">Choose messages or topics to send for this campaign</span>
+                            <span class="block text-sm text-gray-500 mb-4">Choose messages to send for this campaign</span>
 
-                            <!-- Topics to send -->
-                            <div class="flex mb-4">
-                                <span class="block whitespace-nowrap text-sm text-gray-700 mr-4">Topics</span>
-                                <el-cascader v-model="selectedOptions" :props="propsForTopics" class="w-full"/>
-                            </div>
+                            <el-select v-model="form.content_to_send" @change="handleContentToSend()" placeholder="Select content to send" size="large">
+                                <el-option v-for="option in contentToSendOptions" :key="option" :label="option" :value="option" > </el-option>
+                            </el-select>
+
+                            selectedMessages: <br>{{ form.message_id_cascade }}<br>
 
                             <!-- Messages to send -->
                             <div class="flex mb-4">
                                 <span class="block whitespace-nowrap text-sm text-gray-700 mr-4">Messages</span>
-                                <el-cascader v-model="selectedOptions" :props="propsForTopics" class="w-full"/>
+                                <el-cascader v-model="form.message_id_cascade" :props="getPropsForMessages()" collapse-tags collapse-tags-tooltip clearable class="w-full"/>
                             </div>
 
                         </div>
@@ -285,6 +299,8 @@ import axios from "axios";
                 type: Object,
                 default: null
             },
+            contentToSendOptions: Array,
+            scheduleTypeOptions: Array,
             subscriptionPlans: Array,
             show: {
                 type: Boolean,
@@ -293,67 +309,6 @@ import axios from "axios";
         },
         data() {
             return {
-                selectedOptions: [ [ 1 ], [ 2 ], [ 1, 4 ], [ 1, 26 ] ],
-                propsForTopics: {
-                    lazy: true,
-                    multiple: true,
-                    checkStrictly: true,
-                    lazyLoad: function(node, resolve) {
-
-                        const { level } = node;
-
-                        //  If this is the first list of options
-                        if( level === 0  ){
-
-                            var url = route('api.topics', { project: route().params.project });
-
-                        //  If this is the nested list of options
-                        }else{
-
-                            console.log('node');
-                            console.log(node);
-
-                            console.log('node.data');
-                            console.log(node.data);
-
-                            console.log('node.data.value');
-                            console.log(node.data.value);
-
-                            var url = route('api.subtopics', { project: route().params.project, topic: node.data.value });
-
-                        }
-
-                        axios.get(url)
-                            .then((response) => {
-                                console.log(response.data.data);
-                                var nodes = response.data.data.map((topic) => {
-                                    return {
-                                        value: topic.id,
-                                        label: topic.title,
-                                        leaf: topic.sub_topics_count == 0
-                                    }
-                                });
-
-                                resolve(nodes);
-
-                            });
-
-                        /*
-                        const { level } = node
-                        setTimeout(() => {
-                        const nodes = Array.from({ length: level + 1 }).map((item) => ({
-                            value: ++this.id,
-                            label: `Option - ${this.id}`,
-                            leaf: level >= 2,
-                        }))
-                        // Invoke `resolve` callback to return the child nodes data and indicate the loading is finished.
-                        resolve(nodes)
-                        }, 1000)
-                        */
-                    },
-                },
-
-
                 moment: moment,
 
                 //  Form attributes
@@ -385,8 +340,6 @@ import axios from "axios";
                 handler: function (val, oldVal) {
 
                     if(val != this.showModal){
-                        console.log('val');
-                        console.log(val);
                         this.showModal = val;
                         this.reset();
                     }
@@ -397,6 +350,15 @@ import axios from "axios";
         },
 
         computed: {
+            isSendingNow(){
+                return this.form.schedule_type == 'Send Now';
+            },
+            isSendingLater(){
+                return this.form.schedule_type == 'Send Later';
+            },
+            isSendingRecurring(){
+                return this.form.schedule_type == 'Send Recurring';
+            },
             hasCampaign(){
                 return this.campaign == null ? false : true;
             },
@@ -409,19 +371,19 @@ import axios from "axios";
             frequencyOptions(){
                 return [
                     {
-                        name: this.form.duration == '1' ? 'Day': 'Days',
+                        name: this.form.recurring_duration == '1' ? 'Day': 'Days',
                         value: 'Days'
                     },
                     {
-                        name: this.form.duration == '1' ? 'Week': 'Weeks',
+                        name: this.form.recurring_duration == '1' ? 'Week': 'Weeks',
                         value: 'Weeks'
                     },
                     {
-                        name: this.form.duration == '1' ? 'Month': 'Months',
+                        name: this.form.recurring_duration == '1' ? 'Month': 'Months',
                         value: 'Months'
                     },
                     {
-                        name: this.form.duration == '1' ? 'Year': 'Years',
+                        name: this.form.recurring_duration == '1' ? 'Year': 'Years',
                         value: 'Years'
                     }
                 ];
@@ -436,7 +398,50 @@ import axios from "axios";
             }
         },
         methods: {
+            getPropsForMessages() {
 
+                var allowMultipleEntries = (this.form.content_to_send == 'Any Message');
+
+                return {
+                    lazy: true,
+                    multiple: allowMultipleEntries,
+                    checkStrictly: allowMultipleEntries,
+                    lazyLoad: function(node, resolve) {
+
+                        const { level } = node;
+
+                        //  If this is the first list of options
+                        if( level === 0  ){
+
+                            var url = route('api.messages', { project: route().params.project });
+
+                        //  If this is the nested list of options
+                        }else{
+
+                            var url = route('api.message', { project: route().params.project, message: node.data.value, type: 'children' });
+
+                        }
+
+                        axios.get(url)
+                            .then((response) => {
+
+                                var nodes = response.data.data.map((message) => {
+                                    return {
+                                        value: message.id,
+                                        label: message.content.length < 40 ? String (message.content) : String (message.content).substring(0, 40),
+                                        leaf: message.children_count == 0
+                                    }
+                                });
+
+                                resolve(nodes);
+
+                            }).catch(() => resolve([]));
+                    },
+                }
+            },
+            handleContentToSend() {
+                this.form.message_id_cascade = [];
+            },
             /**
              *  MODAL METHODS
              */
@@ -489,7 +494,7 @@ import axios from "axios";
                     },
                 };
 
-                this.form.put(route('update-campaign', { project: route().params.project, campaign_id: this.campaign.id }), options);
+                this.form.put(route('update-campaign', { project: route().params.project, campaign: this.campaign.id }), options);
             },
             destroy() {
 
@@ -510,7 +515,7 @@ import axios from "axios";
                     },
                 };
 
-                this.form.delete(route('delete-campaign', { project: route().params.project, campaign_id: this.campaign.id }), options);
+                this.form.delete(route('delete-campaign', { project: route().params.project, campaign: this.campaign.id }), options);
             },
             handleOnSuccess(){
 
@@ -537,10 +542,13 @@ import axios from "axios";
                 this.form = this.$inertia.form({
                     name: this.hasCampaign ? this.campaign.name : null,
                     description: this.hasCampaign ? this.campaign.description : null,
-                    duration: this.hasCampaign ? this.campaign.duration : 1,
-                    frequency: this.hasCampaign ? this.campaign.frequency : 'Days',
+                    schedule_type: this.hasCampaign ? this.campaign.schedule_type : this.scheduleTypeOptions[0],
+                    recurring_duration: this.hasCampaign ? this.campaign.recurring_duration : 1,
+                    recurring_frequency: this.hasCampaign ? this.campaign.recurring_frequency : 'Days',
 
-                    message_category_ids: [],
+                    content_to_send: this.hasCampaign ? this.campaign.content_to_send : 'Specific Message',
+                    message_id_cascade: this.hasCampaign ? this.campaign.message_id_cascade : [],
+
                     subcription_plan_ids: this.hasCampaign ? this.campaign.subscription_plans.map((subscriptionPlan) => subscriptionPlan.id) : [],
 
                     //  Set start date to today

@@ -122,21 +122,6 @@
                 this.modalAction = action;
                 this.isShowingModal = true
             },
-            getLanguageColor(language){
-                if( language.name == 'English' ){
-
-                    return 'green';
-
-                }else if( language.name == 'Setswana' ){
-
-                    return 'blue';
-
-                }else{
-
-                    return 'lime';
-
-                }
-            },
             getPercentageOfCoverage(subscribersCount){
                 if( this.totalSubscribers > 0 ){
                     return Math.round((subscribersCount / this.totalSubscribers) * 100)

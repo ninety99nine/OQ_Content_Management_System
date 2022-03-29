@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Language;
 use \Carbon\Carbon;
 use Inertia\Inertia;
 use App\Models\Project;
@@ -13,8 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
 {
-    public function index(){
-
+    public function index()
+    {
         //  Get the user projects
         $projectsPayload = Auth::user()->projects()->paginate(10);
 
@@ -22,11 +21,10 @@ class ProjectController extends Controller
         return Inertia::render('Projects/List/Main', [
             'projectsPayload' => $projectsPayload
         ]);
-
     }
 
-    public function create(Request $request){
-
+    public function create(Request $request)
+    {
         //  Validate the request inputs
         Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:5', 'max:500']
@@ -58,18 +56,11 @@ class ProjectController extends Controller
             'updated_at' => Carbon::now(),
         ]);
 
-        //  Create new languange
-        $project = Language::create([
-            'name' => 'English',
-            'project_id' => $project->id,
-        ]);
-
         return redirect()->back()->with('message', 'Created Successfully');
-
     }
 
-    public function update(Request $request, $id){
-
+    public function update(Request $request, Project $project)
+    {
         //  Validate the request inputs
         Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:5', 'max:500']
@@ -85,22 +76,20 @@ class ProjectController extends Controller
         $settings = $request->input('settings');
 
         //  Update project
-        Project::findOrFail($id)->update([
+        $project->update([
             'name' => $name,
             'settings' => $settings,
             'description' => $description
         ]);
 
         return redirect()->back()->with('message', 'Updated Successfully');
-
     }
 
-    public function delete(Request $request, $id){
-
+    public function delete(Request $request, Project $project)
+    {
         //  Delete project
-        Project::findOrFail($id)->delete();
+        $project->delete();
 
         return redirect()->back()->with('message', 'Deleted Successfully');
-
     }
 }

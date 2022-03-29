@@ -5,105 +5,99 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Message;
 use App\Models\Project;
-use App\Models\Language;
-use App\Models\Subscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class MessageController extends Controller
 {
-    public function index(Project $project){
+    public function index(Project $project)
+    {
+        $messagesPayload = $project->messages()->whereIsRoot()->latest()->paginate();
 
-        if( $project ){
-
-            //  Get the languages
-            $languages = $project->languages()->get();
-
-            //  Count the subscribers
-            $totalSubscribers = $project->subscribers()->count();
-
-            //  Get the messages
-            $messagesPayload = $project->messages()->with('language:id,name')->withCount('subscribers')->latest()->paginate(10);
-
-            //  Render the messages view
-            return Inertia::render('Messages/List/Main', [
-                'totalSubscribers' => $totalSubscribers,
-                'messagesPayload' => $messagesPayload,
-                'languages' => $languages
-            ]);
-
-        }
+        return Inertia::render('Messages/List/Main', [
+            'parentMessage' => null,
+            'breadcrumbs' => [],
+            'messagesPayload' => $messagesPayload
+        ]);
 
     }
 
-    public function create(Request $request, Project $project){
+    public function show(Project $project, Message $message)
+    {
+        $messagesPayload = $message->children()->latest()->paginate();
 
-        if( $project ){
+        $breadcrumbs = collect($message->ancestorsAndSelf($message->id))->map(fn($message) => collect($message)->only(['id', 'content']))->toArray();
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'content' => ['required', 'string', 'min:5', 'max:500'],
-                'language' => ['required']
-            ])->validate();
-
-            //  Set content
-            $content = $request->input('content');
-
-            //  Set language id
-            $language_id = $request->input('language');
-
-            //  Create new message
-            Message::create([
-                'content' => $content,
-                'project_id' => $project->id,
-                'language_id' => $language_id,
-            ]);
-
-            return redirect()->back()->with('message', 'Created Successfully');
-
-        }
+        return Inertia::render('Messages/List/Main', [
+            'parentMessage' => $message,
+            'breadcrumbs' => $breadcrumbs,
+            'messagesPayload' => $messagesPayload
+        ]);
 
     }
 
-    public function update(Request $request, Project $project, $message_id){
+    public function create(Request $request, Project $project)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'content' => ['nullable', 'string', 'min:5', 'max:500'],
+            'parent_id' => ['nullable', 'integer', 'min:1', 'exists:messages,id']
+        ])->validate();
 
-        if( $project ){
+        //  Set content
+        $content = $request->input('content');
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'content' => ['required', 'string', 'min:5', 'max:500'],
-                'language' => ['required']
-            ])->validate();
+        //  Set parent message id
+        $parent_id = $request->input('parent_id');
 
-            //  Set content
-            $content = $request->input('content');
+        //  Create new message
+        $message = Message::create([
+            'content' => $content,
+            'project_id' => $project->id
+        ]);
 
-            //  Set language id
-            $language_id = $request->input('language');
+        if( $parentTopic = Message::find($parent_id) ) {
 
-            //  Update message
-            Message::findOrFail($message_id)->update([
-                'content' => $content,
-                'project_id' => $project->id,
-                'language_id' => $language_id,
-            ]);
-
-            return redirect()->back()->with('message', 'Updated Successfully');
+            $parentTopic->prependNode($message);
 
         }
 
+        return redirect()->back()->with('message', 'Created Successfully');
     }
 
-    public function delete(Project $project, $message_id){
+    public function update(Request $request, Project $project, Message $message)
+    {
+        Validator::make($request->all(), [
+            'content' => ['nullable', 'string', 'min:5', 'max:500'],
+            'parent_id' => ['nullable', 'integer', 'min:1', 'exists:messages,id']
+        ])->validate();
 
-        if( $project ){
+        //  Set content
+        $content = $request->input('content');
 
-            //  Delete message
-            Message::findOrFail($message_id)->delete();
+        //  Set parent message id
+        $parent_id = $request->input('parent_id');
 
-            return redirect()->back()->with('message', 'Deleted Successfully');
+        //  Update message
+        $message->update([
+            'content' => $content,
+            'project_id' => $project->id
+        ]);
+
+        if( $parentTopic = Message::find($parent_id) ) {
+
+            $parentTopic->prependNode($message);
 
         }
 
+        return redirect()->back()->with('message', 'Updated Successfully');
+    }
+
+    public function delete(Project $project, $message_id)
+    {
+        //  Delete message
+        Message::findOrFail($message_id)->delete();
+
+        return redirect()->back()->with('message', 'Deleted Successfully');
     }
 }

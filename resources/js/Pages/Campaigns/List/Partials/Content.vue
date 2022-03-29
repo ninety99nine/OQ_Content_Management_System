@@ -2,7 +2,7 @@
 
     <div>
 
-        <manage-campaign-modal v-model="isShowingModal" :action="modalAction" :campaign="campaign" :subscriptionPlans="subscriptionPlans" />
+        <manage-campaign-modal v-model="isShowingModal" :action="modalAction" :campaign="campaign" :subscriptionPlans="subscriptionPlans" :contentToSendOptions="contentToSendOptions" :scheduleTypeOptions="scheduleTypeOptions" />
 
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
 
@@ -82,6 +82,8 @@
             ManageCampaignModal, Pagination
         },
         props: {
+            contentToSendOptions: Array,
+            scheduleTypeOptions: Array,
             subscriptionPlans: Array,
             campaignsPayload: Object
         },

@@ -3,50 +3,49 @@
     <div>
 
         <!-- Add Topic Button -->
-        <div v-if="showHeader" class="grid grid-cols-2 gap-4">
+        <div v-if="showHeader" class="grid grid-cols-2 mb-6 gap-4">
 
-            <div v-if="showSelectLanguage && !parentTopic" class="flex items-center">
+            <div>
+                <div class="bg-gray-50 pt-3 pl-6 border-b rounded-t">
 
-                <!-- Select Language -->
-                <span>Topics For: </span>
-                <el-select v-model="showTopicsForSelectedLanguageName" class="m-2" placeholder="Select" size="large"
-                    @change="$inertia.get(route('topics', { project: route().params.project, _query: { language: showTopicsForSelectedLanguageName } }))">
-                    <el-option v-for="language in languageOptions" :key="language.name" :value="language.name" :label="language.name"></el-option>
-                </el-select>
+                    <div class="text-2xl font-semibold leading-6 text-gray-500 mb-4">{{ parentTopic ? parentTopic.title : 'Topics' }}</div>
 
-            </div>
+                    <template v-if="parentTopic">
 
-            <div v-if="parentTopic" class="bg-gray-50 pt-3 pl-6 border-b rounded-t">
-                <div class="text-2xl font-semibold leading-6 text-gray-500">{{ parentTopic.title }}</div>
-                <div class="text-sm text-gray-500 my-2">{{ parentTopic.content }}</div>
-                <div class="text-sm text-gray-500 my-2">
+                        <el-breadcrumb separator=">" class="mb-4">
+                            <el-breadcrumb-item @click="nagivateToTopic()">
+                                <span class="hover:underline hover:text-green-600 text-green-500 font-semibold cursor-pointer">Topics</span>
+                            </el-breadcrumb-item>
+
+                            <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.id" @click="nagivateToTopic(breadcrumb)">
+                                <span class="hover:underline hover:text-green-600 text-green-500 font-semibold cursor-pointer">{{ breadcrumb.title }}</span>
+                            </el-breadcrumb-item>
+                        </el-breadcrumb>
+
+                        <jet-secondary-button @click="goBackToPreviousPage()" class="py-1 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                            </svg>
+                            <span class="ml-2">Go Back</span>
+                        </jet-secondary-button>
+
+                    </template>
+
+                </div>
+
+                <div class="bg-gray-50 border-b pl-6 py-3 rounded-t text-gray-500 text-sm mb-6">
                     <span class="font-bold mr-2">Api Link:</span>
-                    <span class="text-green-500 font-semibold">{{ route('api.subtopics', { project: route().params.project, topic: parentTopic.id }) }}</span>
+                    <span v-if="parentTopic">{{ route('api.topic', { project: route().params.project, topic: parentTopic.id, type: 'children' }) }}</span>
+                    <span v-else>{{ route('api.topics', { project: route().params.project }) }}</span>
                 </div>
             </div>
 
-            <div :class="'grid grid-cols-' + (parentTopic ? 2 : 1) + ' flex items-center'">
-
-                <div v-if="parentTopic">
-                    <jet-secondary-button @click="goBackToPreviousPage()" class="mx-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                        </svg>
-                        <span class="ml-2">Go Back</span>
-                    </jet-secondary-button>
-                </div>
-
-                <div>
-                    <jet-button @click="openModal()" class="float-right w-fit">
-                        {{ showTopicsForSelectedLanguageName ? 'Add '+showTopicsForSelectedLanguageName+' Topic' : 'Add Topic' }}
-                    </jet-button>
-                </div>
-
+            <div>
+                <jet-button @click="openModal()" class="w-fit float-right">Add Topic</jet-button>
+                <div class="clear-both"></div>
             </div>
 
         </div>
-
-        <div class="clear-both"></div>
 
         <div>
 
@@ -101,19 +100,26 @@
 
                         <span class="block mt-6 mb-6">
 
-                            <span>
+                            <span v-if="parentTopic">
                                 You are {{ wantsToUpdate ? 'updating' : 'adding' }} a topic for
                                 <span class="rounded-lg py-1 px-2 border border-green-400 text-green-500 text-sm">
-                                    {{ parentTopic ? parentTopic.title : showTopicsForSelectedLanguageName }}
+                                    {{ parentTopic.title }}
                                 </span>
                             </span>
 
-                            <span v-if="parentTopic">
-                                <span class="px-2">in</span>
-                                <span class="rounded-lg py-1 px-2 border border-green-400 text-green-500 text-sm">
-                                    {{ showTopicsForSelectedLanguageName }}
-                                </span>
-                            </span>
+                            <div v-if="parentTopic" class="bg-gray-50 py-3 px-3 mt-6 mb-2">
+
+                                <el-breadcrumb separator=">">
+                                    <el-breadcrumb-item>
+                                        <span class="hover:text-green-600 text-green-500 font-semibold">Topics</span>
+                                    </el-breadcrumb-item>
+
+                                    <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.id">
+                                        <span class="text-green-500 font-semibold">{{ breadcrumb.title }}</span>
+                                    </el-breadcrumb-item>
+                                </el-breadcrumb>
+
+                            </div>
 
                         </span>
 
@@ -128,11 +134,10 @@
                         <div class="mb-4">
                             <jet-label for="content" value="Content" />
                             <jet-textarea id="content" class="mt-1 block w-full" v-model="form.content" />
-                            <jet-input-error :topic="form.errors.content" class="mt-2" />
+                            <jet-input-error :message="form.errors.content" class="mt-2" />
 
                             <!-- Other errors -->
-                            <jet-input-error :topic="form.errors.language" class="mt-2" />
-                            <jet-input-error :topic="form.errors.parent_topic_id" class="mt-2" />
+                            <jet-input-error :message="form.errors.parent_topic_id" class="mt-2" />
                         </div>
 
                     </template>
@@ -189,26 +194,11 @@
         },
         props: {
             topic: Object,
-            languages: Array,
+            action: String,
             parentTopic: Object,
-            selectedLanguage: Object,
-            action: {
-                type: String,
-                default: 'update'
-            },
-            modelValue: {
-                type: Boolean,
-                default: false
-            },
+            modelValue: Boolean,
+            breadcrumbs: Array,
             showHeader: {
-                type: Boolean,
-                default: false
-            },
-            showSelectLanguage: {
-                type: Boolean,
-                default: false
-            },
-            show: {
                 type: Boolean,
                 default: false
             }
@@ -223,10 +213,7 @@
                 showModal: this.modelValue,
 
                 showSuccessTopic: false,
-                showErrorTopic: false,
-
-                showTopicsForSelectedLanguageId: (this.selectedLanguage || {}).id,
-                showTopicsForSelectedLanguageName: (this.selectedLanguage || {}).name,
+                showErrorTopic: false
             }
         },
 
@@ -264,17 +251,20 @@
             },
             wantsToDelete(){
                 return (this.hasTopic && this.action == 'delete') ? true : false;
-            },
-            languageOptions() {
-                return this.languages.map(function(language){
-                    return {
-                        'name': language.name,
-                        'value': language.id,
-                    };
-                });
             }
         },
         methods: {
+            nagivateToTopic(topic = null){
+                if( topic ){
+
+                    this.$inertia.get(route('show-topic', { project: route().params.project, topic: topic.id }));
+
+                }else{
+
+                    this.$inertia.get(route('topics', { project: route().params.project }));
+
+                }
+            },
             goBackToPreviousPage(){
                 window.history.back();
             },
@@ -330,7 +320,7 @@
                     },
                 };
 
-                this.form.put(route('update-topic', { project: route().params.project, topic_id: this.topic.id }), options);
+                this.form.put(route('update-topic', { project: route().params.project, topic: this.topic.id }), options);
             },
             destroy() {
 
@@ -351,7 +341,7 @@
                     },
                 };
 
-                this.form.delete(route('delete-topic', { project: route().params.project, topic_id: this.topic.id }), options);
+                this.form.delete(route('delete-topic', { project: route().params.project, topic: this.topic.id }), options);
             },
             handleOnSuccess(){
 
@@ -378,8 +368,7 @@
                 this.form = this.$inertia.form({
                     title: this.hasTopic ? this.topic.title : null,
                     content: this.hasTopic ? this.topic.content : null,
-                    parent_topic_id: this.parentTopic ? this.parentTopic.id : null,
-                    language: this.hasTopic ? this.topic.language.id : this.showTopicsForSelectedLanguageId
+                    parent_id: this.parentTopic ? this.parentTopic.id : null
                 });
             },
         },

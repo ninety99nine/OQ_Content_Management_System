@@ -59,6 +59,14 @@ class Project extends Model
     }
 
     /**
+     * Get the messages associated with the project.
+     */
+    public function mainMessages()
+    {
+        return $this->messages()->whereNull('parent_message_id');
+    }
+
+    /**
      * Get the campaigns associated with the project.
      */
     public function campaigns()
@@ -90,14 +98,6 @@ class Project extends Model
         return $this->hasMany(SubscriptionPlan::class);
     }
 
-    /**
-     * Get the languages associated with the project.
-     */
-    public function languages()
-    {
-        return $this->hasMany(Language::class);
-    }
-
     //  ON DELETE EVENT
     public static function boot()
     {
@@ -125,9 +125,6 @@ class Project extends Model
 
                 //  Delete all subscription plans
                 $project->subscriptionPlans()->delete();
-
-                //  Delete all languages
-                $project->languages()->delete();
 
                 //  Delete all records of users being assigned to this project
                 DB::table('user_projects')->where(['project_id' => $project->id])->delete();

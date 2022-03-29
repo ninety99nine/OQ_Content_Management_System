@@ -15,8 +15,9 @@ class CreateSubscriberMessagesTable extends Migration
     {
         Schema::create('subscriber_messages', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('subscriber_id')->nullable();
             $table->unsignedInteger('message_id')->nullable();
+            $table->unsignedInteger('subscriber_id')->nullable();
+            $table->unsignedTinyInteger('sent_sms_count')->nullable();
             $table->unsignedInteger('project_id');
             $table->timestamps();
         });

@@ -3,9 +3,9 @@
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-                <manage-topic-modal :showHeader="true" :showSelectLanguage="true" :parentTopic="topic" :selectedLanguage="selectedLanguage" :languages="languages" />
+                <manage-topic-modal :parentTopic="parentTopic" :topicsPayload="topicsPayload" :breadcrumbs="breadcrumbs" :showHeader="true" />
 
-                <topics-content :parentTopic="topic" :topicsPayload="topicsPayload" :selectedLanguage="selectedLanguage" :languages="languages" :totalSubscribers="totalSubscribers" />
+                <topics-content :parentTopic="parentTopic" :topicsPayload="topicsPayload" :breadcrumbs="breadcrumbs" />
 
             </div>
         </div>
@@ -25,12 +25,9 @@
             ManageTopicModal
         },
         props: {
-            topic: Object,
-            languages: Array,
-            hasTopic: Boolean,
+            parentTopic: Object,
             topicsPayload: Object,
-            totalSubscribers: Number,
-            selectedLanguage: Object
+            breadcrumbs: Array
         }
     })
 </script>

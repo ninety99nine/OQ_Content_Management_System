@@ -275,7 +275,7 @@
                     },
                 };
 
-                this.form.put(route('update-subscription', { project: route().params.project, subscription_id: this.subscription.id }), options);
+                this.form.put(route('update-subscription', { project: route().params.project, subscription: this.subscription.id }), options);
             },
             destroy() {
 
@@ -296,7 +296,7 @@
                     },
                 };
 
-                this.form.delete(route('delete-subscription', { project: route().params.project, subscription_id: this.subscription.id }), options);
+                this.form.delete(route('delete-subscription', { project: route().params.project, subscription: this.subscription.id }), options);
             },
             handleOnSuccess(){
 

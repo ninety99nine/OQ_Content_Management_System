@@ -10,183 +10,174 @@ use Illuminate\Support\Facades\Validator;
 
 class CampaignController extends Controller
 {
-    public function index(Project $project){
+    public function index(Project $project)
+    {
 
-        if( $project ){
+        $scheduleTypeOptions = Campaign::SCHEDULE_TYPE;
+        $contentToSendOptions = Campaign::CONTENT_TO_SEND;
 
-            //  Get the languages
-            $subscriptionPlans = $project->subscriptionPlans()->get();
+        //  Get the subscription plans
+        $subscriptionPlans = $project->subscriptionPlans()->get();
 
-            //  Get the campaigns
-            $campaignsPayload = $project->campaigns()->with('subscriptionPlans:id')->latest()->paginate(10);
+        //  Get the campaigns
+        $campaignsPayload = $project->campaigns()->with('subscriptionPlans:id')->latest()->paginate(10);
 
-            //  Render the campaigns view
-            return Inertia::render('Campaigns/List/Main', [
-                'subscriptionPlans' => $subscriptionPlans,
-                'campaignsPayload' => $campaignsPayload
-            ]);
-
-        }
-
+        //  Render the campaigns view
+        return Inertia::render('Campaigns/List/Main', [
+            'contentToSendOptions' => $contentToSendOptions,
+            'scheduleTypeOptions' => $scheduleTypeOptions,
+            'subscriptionPlans' => $subscriptionPlans,
+            'campaignsPayload' => $campaignsPayload,
+        ]);
     }
 
-    public function create(Request $request, Project $project){
+    public function create(Request $request, Project $project)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:5', 'max:50'],
+            'description' => ['required', 'string', 'min:5', 'max:500'],
+            'duration' => ['required'],
+            'frequency' => ['required'],
+            'start_date' => ['required'],
+            'start_time' => ['required'],
+            'end_date' => ['required'],
+            'end_time' => ['required'],
+            'days_of_the_week' => ['required'],
+        ])->validate();
 
-        if( $project ){
+        //  Set name
+        $name = $request->input('name');
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'name' => ['required', 'string', 'min:5', 'max:50'],
-                'description' => ['required', 'string', 'min:5', 'max:500'],
-                'duration' => ['required'],
-                'frequency' => ['required'],
-                'start_date' => ['required'],
-                'start_time' => ['required'],
-                'end_date' => ['required'],
-                'end_time' => ['required'],
-                'days_of_the_week' => ['required'],
-            ])->validate();
+        //  Set description
+        $description = $request->input('description');
 
-            //  Set name
-            $name = $request->input('name');
+        //  Set schedule type
+        $schedule_type = $request->input('schedule_type');
 
-            //  Set description
-            $description = $request->input('description');
+        //  Set duration
+        $duration = $request->input('duration');
 
-            //  Set duration
-            $duration = $request->input('duration');
+        //  Set frequency
+        $frequency = $request->input('frequency');
 
-            //  Set frequency
-            $frequency = $request->input('frequency');
+        //  Set start date
+        $start_date = $request->input('start_date');
 
-            //  Set start date
-            $start_date = $request->input('start_date');
+        //  Set start time
+        $start_time = $request->input('start_time');
 
-            //  Set start time
-            $start_time = $request->input('start_time');
+        //  Set end date
+        $end_date = $request->input('end_date');
 
-            //  Set end date
-            $end_date = $request->input('end_date');
+        //  Set end time
+        $end_time = $request->input('end_time');
 
-            //  Set end time
-            $end_time = $request->input('end_time');
+        //  Set days of the week
+        $days_of_the_week = $request->input('days_of_the_week');
 
-            //  Set days of the week
-            $days_of_the_week = $request->input('days_of_the_week');
+        //  Set subcription plan ids
+        $subcription_plan_ids = $request->input('subcription_plan_ids');
 
-            //  Set subcription plan ids
-            $subcription_plan_ids = $request->input('subcription_plan_ids');
+        //  Create new campaign
+        $campaign = Campaign::create([
+            'name' => $name,
+            'end_date' => $end_date,
+            'end_time' => $end_time,
+            'duration' => $duration,
+            'frequency' => $frequency,
+            'start_date' => $start_date,
+            'start_time' => $start_time,
+            'project_id' => $project->id,
+            'description' => $description,
+            'schedule_type' => $schedule_type,
+            'has_end_date' => !empty($end_date),
+            'has_start_date' => !empty($start_date),
+            'days_of_the_week' => $days_of_the_week,
+        ]);
 
-            //  Create new campaign
-            $campaign = Campaign::create([
-                'name' => $name,
-                'end_date' => $end_date,
-                'end_time' => $end_time,
-                'duration' => $duration,
-                'frequency' => $frequency,
-                'start_date' => $start_date,
-                'start_time' => $start_time,
-                'project_id' => $project->id,
-                'description' => $description,
-                'has_end_date' => !empty($end_date),
-                'has_start_date' => !empty($start_date),
-                'days_of_the_week' => $days_of_the_week,
-            ]);
+        //  Sync the subscription plans
+        $campaign->subscriptionPlans()->syncWithPivotValues($subcription_plan_ids, ['project_id' => $project->id]);
 
-            //  Sync the subscription plans
-            $campaign->subscriptionPlans()->syncWithPivotValues($subcription_plan_ids, ['project_id' => $project->id]);
-
-            return redirect()->back()->with('message', 'Created Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Created Successfully');
     }
 
-    public function update(Request $request, Project $project, $campaign_id){
+    public function update(Request $request, Project $project, Campaign $campaign)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'name' => ['required', 'string', 'min:5', 'max:50'],
+            'description' => ['required', 'string', 'min:5', 'max:500'],
+            'duration' => ['required'],
+            'frequency' => ['required'],
+            'start_date' => ['required'],
+            'start_time' => ['required'],
+            'end_date' => ['required'],
+            'end_time' => ['required'],
+            'days_of_the_week' => ['required'],
+        ])->validate();
 
-        if( $project ){
+        //  Set name
+        $name = $request->input('name');
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'name' => ['required', 'string', 'min:5', 'max:50'],
-                'description' => ['required', 'string', 'min:5', 'max:500'],
-                'duration' => ['required'],
-                'frequency' => ['required'],
-                'start_date' => ['required'],
-                'start_time' => ['required'],
-                'end_date' => ['required'],
-                'end_time' => ['required'],
-                'days_of_the_week' => ['required'],
-            ])->validate();
+        //  Set description
+        $description = $request->input('description');
 
-            //  Set name
-            $name = $request->input('name');
+        //  Set schedule type
+        $schedule_type = $request->input('schedule_type');
 
-            //  Set description
-            $description = $request->input('description');
+        //  Set duration
+        $duration = $request->input('duration');
 
-            //  Set duration
-            $duration = $request->input('duration');
+        //  Set frequency
+        $frequency = $request->input('frequency');
 
-            //  Set frequency
-            $frequency = $request->input('frequency');
+        //  Set start date
+        $start_date = $request->input('start_date');
 
-            //  Set start date
-            $start_date = $request->input('start_date');
+        //  Set start time
+        $start_time = $request->input('start_time');
 
-            //  Set start time
-            $start_time = $request->input('start_time');
+        //  Set end date
+        $end_date = $request->input('end_date');
 
-            //  Set end date
-            $end_date = $request->input('end_date');
+        //  Set end time
+        $end_time = $request->input('end_time');
 
-            //  Set end time
-            $end_time = $request->input('end_time');
+        //  Set days of the week
+        $days_of_the_week = $request->input('days_of_the_week');
 
-            //  Set days of the week
-            $days_of_the_week = $request->input('days_of_the_week');
+        //  Set subcription plan ids
+        $subcription_plan_ids = $request->input('subcription_plan_ids');
 
-            //  Set subcription plan ids
-            $subcription_plan_ids = $request->input('subcription_plan_ids');
+        //  Update campaign
+        $campaign->update([
+            'name' => $name,
+            'end_date' => $end_date,
+            'end_time' => $end_time,
+            'duration' => $duration,
+            'frequency' => $frequency,
+            'start_date' => $start_date,
+            'start_time' => $start_time,
+            'project_id' => $project->id,
+            'description' => $description,
+            'schedule_type' => $schedule_type,
+            'has_end_date' => !empty($end_date),
+            'has_start_date' => !empty($start_date),
+            'days_of_the_week' => $days_of_the_week,
+        ]);
 
-            //  Get the campaign
-            $campaign = Campaign::findOrFail($campaign_id);
+        //  Sync the subscription plans
+        $campaign->subscriptionPlans()->syncWithPivotValues($subcription_plan_ids, ['project_id' => $project->id]);
 
-            //  Update campaign
-            $campaign->update([
-                'name' => $name,
-                'end_date' => $end_date,
-                'end_time' => $end_time,
-                'duration' => $duration,
-                'frequency' => $frequency,
-                'start_date' => $start_date,
-                'start_time' => $start_time,
-                'project_id' => $project->id,
-                'description' => $description,
-                'has_end_date' => !empty($end_date),
-                'has_start_date' => !empty($start_date),
-                'days_of_the_week' => $days_of_the_week,
-            ]);
-
-            //  Sync the subscription plans
-            $campaign->subscriptionPlans()->syncWithPivotValues($subcription_plan_ids, ['project_id' => $project->id]);
-
-            return redirect()->back()->with('message', 'Updated Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Updated Successfully');
     }
 
-    public function delete(Project $project, $campaign_id){
+    public function delete(Project $project, Campaign $campaign)
+    {
+        //  Delete campaign
+        $campaign->delete();
 
-        if( $project ){
-
-            //  Delete campaign
-            Campaign::findOrFail($campaign_id)->delete();
-
-            return redirect()->back()->with('message', 'Deleted Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Deleted Successfully');
     }
 }

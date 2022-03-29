@@ -12,132 +12,112 @@ use Illuminate\Support\Facades\Validator;
 
 class SubscriberController extends Controller
 {
-    public function index(Project $project){
+    public function index(Project $project)
+    {
+        //  Count the messages
+        $totalMessages = $project->messages()->count();
 
-        if( $project ){
+        //  Get the subscribers
+        $subscribers = $project->subscribers()->with(['latestSubscriptions', 'latestMessages'])->withCount(['messages', 'subscriptions'])->latest()->paginate(10);
 
-            //  Count the messages
-            $totalMessages = $project->messages()->count();
+        //  Modify each subscriber by limiting the lastest subscriptions and lastest messages
+        $subscribersTransformed = $subscribers->getCollection()->map(function($subscriber) {
 
-            //  Get the subscribers
-            $subscribers = $project->subscribers()->with(['lastestSubscriptions', 'lastestMessages'])->withCount(['messages', 'subscriptions'])->latest()->paginate(10);
+            $subscriber = collect($subscriber)->toArray();
 
-            //  Modify each subscriber by limiting the lastest subscriptions and lastest messages
-            $subscribersTransformed = $subscribers->getCollection()->map(function($subscriber) {
+            //  Limit the lastest subscriptions to one record (if any)
+            $subscriber['latest_subscriptions'] = collect($subscriber['latest_subscriptions'])->take(1)->all();
 
-                $subscriber = collect($subscriber)->toArray();
+            //  Limit the lastest messages to one record (if any)
+            $subscriber['latest_messages'] = collect($subscriber['latest_messages'])->take(1)->all();
 
-                //  Limit the lastest subscriptions to one record (if any)
-                $subscriber['lastest_subscriptions'] = collect($subscriber['lastest_subscriptions'])->take(1)->all();
+            // Return the subscriber
+            return $subscriber;
 
-                //  Limit the lastest messages to one record (if any)
-                $subscriber['lastest_messages'] = collect($subscriber['lastest_messages'])->take(1)->all();
+        });
 
-                // Return the subscriber
-                return $subscriber;
-
-            });
-
-            $subscribersTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
-                $subscribersTransformed,
-                $subscribers->total(),
-                $subscribers->perPage(),
-                $subscribers->currentPage(), [
-                    'path' => \Request::url(),
-                    'query' => [
-                        'page' => $subscribers->currentPage()
-                    ]
+        $subscribersTransformedAndPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $subscribersTransformed,
+            $subscribers->total(),
+            $subscribers->perPage(),
+            $subscribers->currentPage(), [
+                'path' => request()->url(),
+                'query' => [
+                    'page' => $subscribers->currentPage()
                 ]
-            );
+            ]
+        );
 
-            //  Render the subscribers view
-            return Inertia::render('Subscribers/List/Main', [
-                'subscribersPayload' => $subscribersTransformedAndPaginated,
-                'totalMessages' => $totalMessages,
-            ]);
-
-        }
-
+        //  Render the subscribers view
+        return Inertia::render('Subscribers/List/Main', [
+            'subscribersPayload' => $subscribersTransformedAndPaginated,
+            'totalMessages' => $totalMessages,
+        ]);
     }
 
-    public function create(Request $request, Project $project){
+    public function create(Request $request, Project $project)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'msisdn' => ['required', 'string', 'min:11', Rule::unique('subscribers')->where(function ($query) use ($request, $project) {
 
-        if( $project ){
+                //  Make sure that this project does not already have this subscriber msisdn
+                return $query->where('msisdn', $request->input('msisdn'))->where('project_id', $project->id);
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'msisdn' => ['required', 'string', 'min:11', Rule::unique('subscribers')->where(function ($query) use ($request, $project) {
+            })]
+        ], [
+            'msisdn.required' => 'The mobile number is required.',
+            'msisdn.min' => 'The mobile number must be at least 11 characters',
+            'msisdn.unique' => 'A subscriber with the given mobile number already exists.',
+            'msisdn.string' => 'Enter a valid mobile number and extension e.g 26772000001.',
+        ])->validate();
 
-                    //  Make sure that this project does not already have this subscriber msisdn
-                    return $query->where('msisdn', $request->input('msisdn'))->where('project_id', $project->id);
+        //  Set msisdn
+        $msisdn = $request->input('msisdn');
 
-                })]
-            ], [
-                'msisdn.required' => 'The mobile number is required.',
-                'msisdn.min' => 'The mobile number must be at least 11 characters',
-                'msisdn.unique' => 'A subscriber with the given mobile number already exists.',
-                'msisdn.string' => 'Enter a valid mobile number and extension e.g 26772000001.',
-            ])->validate();
+        //  Create new subscriber
+        Subscriber::create([
+            'msisdn' => $msisdn,
+            'project_id' => $project->id
+        ]);
 
-            //  Set msisdn
-            $msisdn = $request->input('msisdn');
-
-            //  Create new subscriber
-            Subscriber::create([
-                'msisdn' => $msisdn,
-                'project_id' => $project->id
-            ]);
-
-            return redirect()->back()->with('message', 'Created Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Created Successfully');
     }
 
-    public function update(Request $request, Project $project, $subscriber_id){
+    public function update(Request $request, Project $project, Subscriber $subscriber)
+    {
+        //  Validate the request inputs
+        Validator::make($request->all(), [
+            'msisdn' => ['required', 'string', 'min:11', Rule::unique('subscribers')->where(function ($query) use ($request, $project) {
 
-        if( $project ){
+                //  Make sure that this project does not already have this subscriber msisdn
+                return $query->where('msisdn', $request->input('msisdn'))->where('project_id', $project->id);
 
-            //  Validate the request inputs
-            Validator::make($request->all(), [
-                'msisdn' => ['required', 'string', 'min:11', Rule::unique('subscribers')->where(function ($query) use ($request, $project) {
+            })]
+        ], [
+            'msisdn.required' => 'The mobile number is required.',
+            'msisdn.min' => 'The mobile number must be at least 11 characters',
+            'msisdn.unique' => 'A subscriber with the given mobile number already exists.',
+            'msisdn.string' => 'Enter a valid mobile number and extension e.g 26772000001.',
+        ])->validate();
 
-                    //  Make sure that this project does not already have this subscriber msisdn
-                    return $query->where('msisdn', $request->input('msisdn'))->where('project_id', $project->id);
+        //  Set msisdn
+        $msisdn = $request->input('msisdn');
 
-                })]
-            ], [
-                'msisdn.required' => 'The mobile number is required.',
-                'msisdn.min' => 'The mobile number must be at least 11 characters',
-                'msisdn.unique' => 'A subscriber with the given mobile number already exists.',
-                'msisdn.string' => 'Enter a valid mobile number and extension e.g 26772000001.',
-            ])->validate();
+        //  Update subscriber
+        $subscriber->update([
+            'msisdn' => $msisdn,
+            'project_id' => $project->id
+        ]);
 
-            //  Set msisdn
-            $msisdn = $request->input('msisdn');
-
-            //  Update subscriber
-            Subscriber::findOrFail($subscriber_id)->update([
-                'msisdn' => $msisdn,
-                'project_id' => $project->id
-            ]);
-
-            return redirect()->back()->with('message', 'Updated Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Updated Successfully');
     }
 
-    public function delete(Project $project, $subscriber_id){
+    public function delete(Project $project, Subscriber $subscriber)
+    {
+        //  Delete subscriber
+        $subscriber->delete();
 
-        if( $project ){
-
-            //  Delete subscriber
-            Subscriber::findOrFail($subscriber_id)->delete();
-
-            return redirect()->back()->with('message', 'Deleted Successfully');
-
-        }
-
+        return redirect()->back()->with('message', 'Deleted Successfully');
     }
 }

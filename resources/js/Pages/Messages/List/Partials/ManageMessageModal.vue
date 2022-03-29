@@ -3,14 +3,54 @@
     <div>
 
         <!-- Add Message Button -->
-        <jet-button v-if="showAddbutton" @click="openModal()" class="float-right mb-6">
-            Add Message
-        </jet-button>
+        <div v-if="showHeader" class="grid grid-cols-2 mb-6 gap-4">
 
-        <div class="clear-both">
+            <div>
+                <div class="bg-gray-50 pt-3 pl-6 border-b rounded-t">
+
+                    <div class="text-2xl font-semibold leading-6 text-gray-500 mb-4">{{ parentMessage ? parentMessage.content : 'Messages' }}</div>
+
+                    <template v-if="parentMessage">
+
+                        <el-breadcrumb separator=">" class="mb-4">
+                            <el-breadcrumb-item @click="nagivateToMessage()">
+                                <span class="hover:underline hover:text-green-600 text-green-500 font-semibold cursor-pointer">Messages</span>
+                            </el-breadcrumb-item>
+
+                            <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.id" @click="nagivateToMessage(breadcrumb)">
+                                <span class="hover:underline hover:text-green-600 text-green-500 font-semibold cursor-pointer">{{ breadcrumb.content }}</span>
+                            </el-breadcrumb-item>
+                        </el-breadcrumb>
+
+                        <jet-secondary-button @click="goBackToPreviousPage()" class="py-1 mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                            </svg>
+                            <span class="ml-2">Go Back</span>
+                        </jet-secondary-button>
+
+                    </template>
+
+                </div>
+
+                <div class="bg-gray-50 border-b pl-6 py-3 rounded-t text-gray-500 text-sm mb-6">
+                    <span class="font-bold mr-2">Api Link:</span>
+                    <span v-if="parentMessage">{{ route('api.message', { project: route().params.project, message: parentMessage.id, type: 'children' }) }}</span>
+                    <span v-else>{{ route('api.messages', { project: route().params.project }) }}</span>
+                </div>
+            </div>
+
+            <div>
+                <jet-button @click="openModal()" class="w-fit float-right">Add Message</jet-button>
+                <div class="clear-both"></div>
+            </div>
+
+        </div>
+
+        <div>
 
             <!-- Success Message -->
-            <div v-if="showSuccessMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <div v-if="showSuccessMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6 mt-3" role="alert">
                 <strong v-if="wantsToUpdate" class="font-bold">Message updated successfully</strong>
                 <strong v-else-if="wantsToDelete" class="font-bold">Message deleted successfully</strong>
                 <strong v-else class="font-bold">Message created successfully</strong>
@@ -21,7 +61,7 @@
             </div>
 
             <!-- Error Message -->
-            <div v-if="showErrorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <div v-if="showErrorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 mt-3" role="alert">
                 <strong v-if="wantsToUpdate" class="font-bold">Message update failed</strong>
                 <strong v-else-if="wantsToDelete" class="font-bold">Message delete failed</strong>
                 <strong v-else class="font-bold">Message creation failed</strong>
@@ -58,18 +98,39 @@
 
                     <template v-else>
 
+                        <span class="block mt-6 mb-6">
+
+                            <span v-if="parentMessage">
+                                You are {{ wantsToUpdate ? 'updating' : 'adding' }} a message for
+                                <span class="rounded-lg py-1 px-2 border border-green-400 text-green-500 text-sm">
+                                    {{ parentMessage.content }}
+                                </span>
+                            </span>
+
+                            <div v-if="parentMessage" class="bg-gray-50 py-3 px-3 mt-6 mb-2">
+
+                                <el-breadcrumb separator=">">
+                                    <el-breadcrumb-item>
+                                        <span class="hover:text-green-600 text-green-500 font-semibold">Messages</span>
+                                    </el-breadcrumb-item>
+
+                                    <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb.id">
+                                        <span class="text-green-500 font-semibold">{{ breadcrumb.content }}</span>
+                                    </el-breadcrumb-item>
+                                </el-breadcrumb>
+
+                            </div>
+
+                        </span>
+
                         <!-- Content -->
                         <div class="mb-4">
                             <jet-label for="content" value="Content" />
                             <jet-textarea id="content" class="mt-1 block w-full" v-model="form.content" />
                             <jet-input-error :message="form.errors.content" class="mt-2" />
-                        </div>
 
-                        <!-- Language -->
-                        <div class="mb-4">
-                            <jet-label for="language" value="Language" class="mb-1" />
-                            <jet-select-input placeholder="Select language" :options="languageOptions" v-model="form.language" />
-                            <jet-input-error :message="form.errors.language" class="mt-2" />
+                            <!-- Other errors -->
+                            <jet-input-error :message="form.errors.parent_message_id" class="mt-2" />
                         </div>
 
                     </template>
@@ -117,33 +178,20 @@
     import JetSelectInput from '@/Jetstream/SelectInput'
     import JetDialogModal from '@/Jetstream/DialogModal'
     import JetDangerButton from '@/Jetstream/DangerButton'
-    import JetActionMessage from '@/Jetstream/ActionMessage.vue'
     import JetSecondaryButton from '@/Jetstream/SecondaryButton'
 
     export default defineComponent({
         components: {
-            JetLabel, JetInput, JetTextarea, JetButton, JetInputError, JetSelectInput, JetDialogModal, JetSecondaryButton, JetActionMessage,
+            JetLabel, JetInput, JetTextarea, JetButton, JetInputError, JetSelectInput, JetDialogModal, JetSecondaryButton,
             JetDangerButton
         },
         props: {
-            action: {
-                type: String,
-                default: 'update'
-            },
-            modelValue: {
-                type: Boolean,
-                default: false
-            },
-            showAddbutton: {
-                type: Boolean,
-                default: false
-            },
-            message: {
-                type: Object,
-                default: null
-            },
-            languages: Array,
-            show: {
+            message: Object,
+            action: String,
+            parentMessage: Object,
+            modelValue: Boolean,
+            breadcrumbs: Array,
+            showHeader: {
                 type: Boolean,
                 default: false
             }
@@ -196,18 +244,23 @@
             },
             wantsToDelete(){
                 return (this.hasMessage && this.action == 'delete') ? true : false;
-            },
-            languageOptions() {
-                return this.languages.map(function(language){
-                    return {
-                        'name': language.name,
-                        'value': language.id,
-                    };
-                });
             }
         },
         methods: {
+            nagivateToMessage(message = null){
+                if( message ){
 
+                    this.$inertia.get(route('show-message', { project: route().params.project, message: message.id }));
+
+                }else{
+
+                    this.$inertia.get(route('messages', { project: route().params.project }));
+
+                }
+            },
+            goBackToPreviousPage(){
+                window.history.back();
+            },
             /**
              *  MODAL METHODS
              */
@@ -307,7 +360,7 @@
             reset() {
                 this.form = this.$inertia.form({
                     content: this.hasMessage ? this.message.content : null,
-                    language: this.hasMessage ? this.message.language.id : (this.languageOptions.length ? this.languageOptions[0].value: null)
+                    parent_id: this.parentMessage ? this.parentMessage.id : null
                 });
             },
         },
