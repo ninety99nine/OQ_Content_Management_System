@@ -36,9 +36,9 @@
                                     <div class="text-sm text-gray-900">{{ topic.content }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" @click.prevent="$inertia.get(route('show-topic', { project: route().params.project, topic: topic.id }))" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                    <a href="#" @click.prevent="showModal(topic, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                    <a href="#" @click.prevent="showModal(topic, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('View topics')" href="#" @click.prevent="$inertia.get(route('show-topic', { project: route().params.project, topic: topic.id }))" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('Manage topics')" href="#" @click.prevent="showModal(topic, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('Manage topics')" href="#" @click.prevent="showModal(topic, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
                                 </td>
                             </tr>
 

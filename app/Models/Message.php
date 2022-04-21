@@ -42,7 +42,9 @@ class Message extends Model
      */
     public function subscribers()
     {
-        return $this->belongsToMany(Subscriber::class, 'subscriber_messages');
+        return $this->belongsToMany(Subscriber::class, 'subscriber_messages')
+                    ->withPivot(['sent_sms_count'])
+                    ->withTimestamps();
     }
 
     //  ON DELETE EVENT

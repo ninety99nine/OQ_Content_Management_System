@@ -2,7 +2,7 @@
 
     <div>
 
-        <div v-if="showAddbutton" class="grid grid-cols-2 gap-4">
+        <div v-if="$inertia.page.props.projectPermissions.includes('Manage subscription plans') && showAddbutton" class="grid grid-cols-2 gap-4">
 
             <div class="bg-gray-50 pt-3 pl-6 border-b rounded-t">
                 <div class="text-sm text-gray-500 my-2">
@@ -231,6 +231,18 @@
             },
             frequencyOptions(){
                 return [
+                    {
+                        name: this.form.duration == '1' ? 'Second': 'Second',
+                        value: 'Seconds'
+                    },
+                    {
+                        name: this.form.duration == '1' ? 'Minutes': 'Minute',
+                        value: 'Minutes'
+                    },
+                    {
+                        name: this.form.duration == '1' ? 'Hours': 'Hour',
+                        value: 'Hours'
+                    },
                     {
                         name: this.form.duration == '1' ? 'Day': 'Days',
                         value: 'Days'

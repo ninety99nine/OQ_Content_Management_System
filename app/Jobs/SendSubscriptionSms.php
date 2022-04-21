@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Models\Campaign;
-use App\Models\Message;
-use App\Models\Subscriber;
 use Carbon\Carbon;
+use App\Models\Message;
+use App\Models\Campaign;
+use App\Models\Project;
+use App\Models\Subscriber;
 use Illuminate\Bus\Queueable;
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,42 +16,32 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 
-class SendSubscriptionSms implements ShouldQueue, ShouldBeUnique
+class SendSubscriptionSms implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $subscriber;
     public $campaign;
+    public $username;
+    public $password;
     public $message;
-
-    /**
-     *  The unique ID of the job.
-     *
-     *  Sometimes, you may want to ensure that only one instance of a specific job is on
-     *  the queue at any point in time. You may do so by implementing the ShouldBeUnique
-     *  interface on your job class. So the current job will not be dispatched if another
-     *  instance of the job is already on the queue and has not finished processing.
-     *
-     *  Refer: https://laravel.com/docs/8.x/queues#unique-jobs
-     *
-     *  @return string
-     */
-    public function uniqueId()
-    {
-        return $this->subscriber->id;
-    }
+    public $sender;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Subscriber $subscriber, Message $message, Campaign $campaign)
+    public function __construct(Subscriber $subscriber, Message $message, Campaign $campaign, $sender, $username, $password)
     {
-        $this->subscriber = $subscriber;
-        $this->campaign = $campaign;
-        $this->message = $message;
+        info('Dispatch: SendSubscriptionSms - construct()');
 
+        $this->subscriber = $subscriber->withoutRelations();
+        $this->campaign = $campaign;
+        $this->username = $username;
+        $this->password = $password;
+        $this->message = $message;
+        $this->sender = $sender;
     }
 
     /**
@@ -59,8 +51,25 @@ class SendSubscriptionSms implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
+        info('Dispatch: SendSubscriptionSms - handle()');
+
         //  Send the daily message to the subscriber
         try {
+
+            //  Sleep for 5 seconds
+            sleep(5);
+
+            //  Determine if the batch has been cancelled
+            if ($batch = $this->batch()) {
+
+                if( $batch->cancelled() ) {
+
+                    //  If cancelled, stop the sending of this message
+                    return;
+
+                }
+
+            }
 
             //  Get the recipient mobile number
             $recipient = $this->subscriber->msisdn;
@@ -70,36 +79,80 @@ class SendSubscriptionSms implements ShouldQueue, ShouldBeUnique
 
             //  Get connection configuration information
             $ip_address = config('app.sms_config.ip_address');
-            $username = config('app.sms_config.username');
-            $password = config('app.sms_config.password');
             $timeout = config('app.sms_config.timeout');
-            $sender = config('app.sms_config.sender');
             $port = config('app.sms_config.port');
 
             /*
-            (new \App\Services\SmsBuilder($sender, $ip_address, $port, $username, $password, $timeout))
+            (new \App\Services\SmsBuilder($this->sender, $ip_address, $port, $this->username, $this->password, $timeout))
                 ->setRecipient($recipient, \smpp\SMPP::TON_INTERNATIONAL)
                 ->sendMessage($message);
             */
 
-            //  Record message sent
-            DB::table('subscriber_messages')->insert([
-                'project_id' => $this->message->project_id,
+            //  Find a matching subscriber message
+            $matchingSubscriberMessage = DB::table('subscriber_messages')->where([
                 'subscriber_id' => $this->subscriber->id,
-                'message_id' => $this->message->id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
+                'message_id' => $this->message->id
             ]);
 
-            //  Record the next message date and time
-            DB::table('campaign_next_message_schedule')->insert([
-                'next_message_date' => $this->campaign->nextMessageDate(),
-                'project_id' => $this->message->project_id,
+            //  If the matching subscriber message exists
+            if( $instance = $matchingSubscriberMessage->first() ) {
+
+                $sendSmsCount = ((int) $instance->sent_sms_count) + 1;
+
+                //  Update the matching subscriber message
+                $matchingSubscriberMessage->update([
+                    'sent_sms_count' => $sendSmsCount,
+                    'updated_at' => Carbon::now()
+                ]);
+
+            //  If the matching subscriber message does not exist
+            }else{
+
+                //  Create the subscriber message record
+                DB::table('subscriber_messages')->insert([
+                    'project_id' => $this->message->project_id,
+                    'subscriber_id' => $this->subscriber->id,
+                    'message_id' => $this->message->id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'sent_sms_count' => 1
+                ]);
+
+            }
+
+            //  Find a matching campaign subscriber
+            $matchingCampaignSubscriber = DB::table('campaign_subscriber')->where([
                 'subscriber_id' => $this->subscriber->id,
-                'campaign_id' => $this->campaign->id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
+                'campaign_id' => $this->campaign->id
             ]);
+
+            //  If the matching campaign subscriber exists
+            if( $instance = $matchingCampaignSubscriber->first() ) {
+
+                $sendSmsCount = ((int) $instance->sent_sms_count) + 1;
+
+                //  Update the matching campaign subscriber
+                $matchingCampaignSubscriber->update([
+                    'next_message_date' => $this->campaign->nextCampaignSmsMessageDate(),
+                    'sent_sms_count' => $sendSmsCount,
+                    'updated_at' => Carbon::now()
+                ]);
+
+            //  If the matching campaign subscriber does not exist
+            }else{
+
+                //  Create the campaign subscriber record
+                DB::table('campaign_subscriber')->insert([
+                    'next_message_date' => $this->campaign->nextCampaignSmsMessageDate(),
+                    'project_id' => $this->message->project_id,
+                    'subscriber_id' => $this->subscriber->id,
+                    'campaign_id' => $this->campaign->id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'sent_sms_count' => 1
+                ]);
+
+            }
 
         } catch (\Throwable $th) {
 

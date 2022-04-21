@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Pivots\CampaignNextMessageSchedule;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Subscriber extends Model
@@ -19,47 +19,30 @@ class Subscriber extends Model
      */
     protected $fillable = ['msisdn', 'project_id'];
 
-    public function scopeHasActiveSubscription($query)
+    public function scopeExcludeIds($query, $ids = [])
     {
-        return $query->whereHas('subscriptions', function (Builder $query) {
-            $query->active();
-        });
+        return $query->whereNotIn('id', $ids);
     }
 
-    public function scopeHasReceivedMessage($query)
+    public function scopeHasActiveSubscription($query, $ids = [])
     {
-        /**
-         *  Question: Do we have a message that was created
-         *  between now and 24 hours ago?
-         *
-         *  If we do then we have received our message
-         */
-        return $query->whereHas('messages', function (Builder $query) {
+        return $query->whereHas('subscriptions', function (Builder $query) use ($ids) {
 
-            //  Target the "created_at" field of the "subscriber_messages" table
-            $query->wherePivot('subscriber_messages.created_at', '>', Carbon::now()->subMinutes(1));
+            if( count($ids) ) {
 
-        });
-    }
+                //  Limit to the given subsction ids
+                $query->whereIn('subscriptions.id', $ids)->active();
 
-    public function scopeHasNotReceivedMessage($query)
-    {
-        /**
-         *  Question: Do we have a message that was created
-         *  between now and 24 hours ago?
-         *
-         *  If we don't then we have not received our message
-         */
-        return $query->whereDoesntHave('messages', function (Builder $query) {
+            }else{
 
-            //  Target the "created_at" field of the "subscriber_messages" table
-            $query->where('subscriber_messages.created_at', '>', Carbon::now()->subMinutes(1));
+                $query->active();
 
+            }
         });
     }
 
     /**
-     * Get the project associated with the subscriber.
+     * Get the project associated with the subscriber
      */
     public function project()
     {
@@ -72,7 +55,18 @@ class Subscriber extends Model
     public function messages()
     {
         return $this->belongsToMany(Message::class, 'subscriber_messages')
+                    ->withPivot(['sent_sms_count'])
                     ->withTimestamps();
+    }
+
+    /**
+     * Get the campaigns associated with the subscriber
+     */
+    public function campaigns()
+    {
+        return $this->belongsToMany(Campaign::class, 'campaign_subscriber')
+                    ->withPivot(CampaignNextMessageSchedule::VISIBLE_COLUMNS)
+                    ->using(CampaignNextMessageSchedule::class);
     }
 
     /**
@@ -123,7 +117,9 @@ class Subscriber extends Model
     public function latestSubscriptions()
     {
         return $this->subscriptions()->latest();
-    }    //  ON DELETE EVENT
+    }
+
+    //  ON DELETE EVENT
     public static function boot()
     {
         try {

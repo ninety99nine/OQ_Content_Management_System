@@ -3,7 +3,7 @@
     <div>
 
         <!-- Add Campaign Button -->
-        <jet-button v-if="showAddbutton" @click="openModal()" class="float-right mb-6">
+        <jet-button v-if="$inertia.page.props.projectPermissions.includes('Manage campaigns') && showAddbutton" @click="openModal()" class="float-right mb-6">
             Add Campaign
         </jet-button>
 
@@ -82,6 +82,8 @@
                             <el-select v-model="form.schedule_type" placeholder="Select schedule type" size="large">
                                 <el-option v-for="option in scheduleTypeOptions" :key="option" :label="option" :value="option" > </el-option>
                             </el-select>
+
+                            <jet-input-error :message="form.errors.schedule_type" />
 
                         </div>
 
@@ -201,6 +203,8 @@
 
                             </div>
 
+                            <jet-input-error :message="form.errors.subcription_plan_ids" />
+
                         </div>
 
                         <div class="mt-10 mb-10">
@@ -214,17 +218,19 @@
 
                             <span class="block text-sm text-gray-500 mb-4">Choose messages to send for this campaign</span>
 
-                            <el-select v-model="form.content_to_send" @change="handleContentToSend()" placeholder="Select content to send" size="large">
+                            <el-select v-model="form.message_to_send" @change="handleContentToSend()" placeholder="Select content to send" size="large">
                                 <el-option v-for="option in contentToSendOptions" :key="option" :label="option" :value="option" > </el-option>
                             </el-select>
 
-                            selectedMessages: <br>{{ form.message_id_cascade }}<br>
+                            selectedMessages: <br>{{  }}<br>
 
                             <!-- Messages to send -->
                             <div class="flex mb-4">
                                 <span class="block whitespace-nowrap text-sm text-gray-700 mr-4">Messages</span>
-                                <el-cascader v-model="form.message_id_cascade" :props="getPropsForMessages()" collapse-tags collapse-tags-tooltip clearable class="w-full"/>
+                                <el-cascader v-model="form.message_ids" :props="getPropsForMessages()" collapse-tags collapse-tags-tooltip clearable class="w-full"/>
                             </div>
+
+                            <jet-input-error :message="form.errors.message_ids" />
 
                         </div>
 
@@ -371,6 +377,18 @@ import axios from "axios";
             frequencyOptions(){
                 return [
                     {
+                        name: this.form.recurring_duration == '1' ? 'Second': 'Second',
+                        value: 'Seconds'
+                    },
+                    {
+                        name: this.form.recurring_duration == '1' ? 'Minutes': 'Minute',
+                        value: 'Minutes'
+                    },
+                    {
+                        name: this.form.recurring_duration == '1' ? 'Hours': 'Hour',
+                        value: 'Hours'
+                    },
+                    {
                         name: this.form.recurring_duration == '1' ? 'Day': 'Days',
                         value: 'Days'
                     },
@@ -400,7 +418,7 @@ import axios from "axios";
         methods: {
             getPropsForMessages() {
 
-                var allowMultipleEntries = (this.form.content_to_send == 'Any Message');
+                var allowMultipleEntries = (this.form.message_to_send == 'Any Message');
 
                 return {
                     lazy: true,
@@ -440,7 +458,7 @@ import axios from "axios";
                 }
             },
             handleContentToSend() {
-                this.form.message_id_cascade = [];
+                this.form.message_ids = [];
             },
             /**
              *  MODAL METHODS
@@ -546,8 +564,8 @@ import axios from "axios";
                     recurring_duration: this.hasCampaign ? this.campaign.recurring_duration : 1,
                     recurring_frequency: this.hasCampaign ? this.campaign.recurring_frequency : 'Days',
 
-                    content_to_send: this.hasCampaign ? this.campaign.content_to_send : 'Specific Message',
-                    message_id_cascade: this.hasCampaign ? this.campaign.message_id_cascade : [],
+                    message_to_send: this.hasCampaign ? this.campaign.message_to_send : 'Specific Message',
+                    message_ids: this.hasCampaign ? this.campaign.message_ids : [],
 
                     subcription_plan_ids: this.hasCampaign ? this.campaign.subscription_plans.map((subscriptionPlan) => subscriptionPlan.id) : [],
 

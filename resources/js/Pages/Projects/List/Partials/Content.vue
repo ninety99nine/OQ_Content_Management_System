@@ -19,7 +19,7 @@
                     <h2 class="text-2xl font-semibold leading-6 text-gray-800">{{ project.name }}</h2>
                     <p class="md:w-80 text-base leading-6 mt-4 text-gray-600">{{ project.description }}</p>
 
-                    <div class="absolute bottom-10 right-10">
+                    <div v-if="project.pivot.permissions.includes('Manage project settings')" class="absolute bottom-10 right-10">
                         <a href="#" @click.prevent="showModal(project, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
                         <a href="#" @click.prevent="showModal(project, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
                     </div>

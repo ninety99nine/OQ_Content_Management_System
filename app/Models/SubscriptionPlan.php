@@ -41,17 +41,6 @@ class SubscriptionPlan extends Model
         return number_format($value, 2);
     }
 
-    public function getFrequencyAttribute($value)
-    {
-        /*
-         *  If the duration is equal to 1, then cut the frequency text
-         *  from "days", "weeks", "months", and "years" to
-         *  "day", "week", "month", and "year". Then
-         *  capitalize the result.
-         */
-        return ucfirst( $this->duration == 1 ? substr($value, 0, -1) : $value );
-    }
-
     /**
      *  Mutators
      */

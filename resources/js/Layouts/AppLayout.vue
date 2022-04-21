@@ -26,39 +26,51 @@
 
                             <template v-if="route().params.project">
 
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View topics')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                     <jet-nav-link :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project }) || route().current('show-topic', { project: route().params.project, topic: route().params.topic })">
                                         Topics
                                     </jet-nav-link>
                                 </div>
 
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View messages')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                     <jet-nav-link :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project }) || route().current('show-message', { project: route().params.project, message: route().params.message })">
                                         Messages
                                     </jet-nav-link>
                                 </div>
 
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                                    <jet-nav-link :href="route('campaigns', { project: route().params.project })" :active="route().current('campaigns', { project: route().params.project })">
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View campaigns')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                    <jet-nav-link :href="route('campaigns', { project: route().params.project })" :active="route().current('campaigns', { project: route().params.project }) || route().current('show-campaign-job-batches', { project: route().params.project, campaign: route().params.campaign })">
                                         Campaigns
                                     </jet-nav-link>
                                 </div>
 
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View subscribers')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                     <jet-nav-link :href="route('subscribers', { project: route().params.project })" :active="route().current('subscribers', { project: route().params.project })">
                                         Subscribers
                                     </jet-nav-link>
                                 </div>
 
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View subscriptions')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                     <jet-nav-link :href="route('subscriptions', { project: route().params.project })" :active="route().current('subscriptions', { project: route().params.project })">
                                         Subscriptions
                                     </jet-nav-link>
                                 </div>
 
-                                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View subscription plans')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                                     <jet-nav-link :href="route('subscription-plans', { project: route().params.project })" :active="route().current('subscription-plans', { project: route().params.project })">
                                         Subscription Plans
+                                    </jet-nav-link>
+                                </div>
+
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View users')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                    <jet-nav-link :href="route('users', { project: route().params.project })" :active="route().current('users', { project: route().params.project }) || route().current('show-user', { project: route().params.project, user: route().params.user })">
+                                        Users
+                                    </jet-nav-link>
+                                </div>
+
+                                <div v-if="$inertia.page.props.projectPermissions.includes('View project settings')" class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                                    <jet-nav-link :href="route('show-project', { project: route().params.project })" :active="route().current('show-project', { project: route().params.project })">
+                                        Settings
                                     </jet-nav-link>
                                 </div>
 
@@ -190,23 +202,29 @@
 
                         <template v-if="route().params.project">
 
-                            <jet-responsive-nav-link :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project }) || route().current('show-topic', { project: route().params.project, topic: route().params.topic })">
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View topics')" :href="route('topics', { project: route().params.project })" :active="route().current('topics', { project: route().params.project }) || route().current('show-topic', { project: route().params.project, topic: route().params.topic })">
                                 Topics
                             </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project }) || route().current('show-message', { project: route().params.project, message: route().params.message })">
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View messages')" :href="route('messages', { project: route().params.project })" :active="route().current('messages', { project: route().params.project }) || route().current('show-message', { project: route().params.project, message: route().params.message })">
                                 Messages
                             </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('campaigns', { project: route().params.project })" :active="route().current('campaigns', { project: route().params.project })">
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View campaigns')" :href="route('campaigns', { project: route().params.project })" :active="route().current('campaigns', { project: route().params.project }) || route().current('show-campaign-job-batches', { project: route().params.project, campaign: route().params.campaign })">
                                 Campaigns
                             </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('subscribers', { project: route().params.project })" :active="route().current('subscribers', { project: route().params.project })">
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View subscribers')" :href="route('subscribers', { project: route().params.project })" :active="route().current('subscribers', { project: route().params.project })">
                                 Subscribers
                             </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('subscriptions', { project: route().params.project })" :active="route().current('subscriptions', { project: route().params.project })">
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View subscriptions')" :href="route('subscriptions', { project: route().params.project })" :active="route().current('subscriptions', { project: route().params.project })">
                                 Subscriptions
                             </jet-responsive-nav-link>
-                            <jet-responsive-nav-link :href="route('subscription-plans', { project: route().params.project })" :active="route().current('subscription-plans', { project: route().params.project })">
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View subscription plans')" :href="route('subscription-plans', { project: route().params.project })" :active="route().current('subscription-plans', { project: route().params.project })">
                                 Subscription Plans
+                            </jet-responsive-nav-link>
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View users')" :href="route('users', { project: route().params.project })" :active="route().current('users', { project: route().params.project }) || route().current('show-user', { project: route().params.project, user: route().params.user })">
+                                Users
+                            </jet-responsive-nav-link>
+                            <jet-responsive-nav-link v-if="$inertia.page.props.projectPermissions.includes('View project settings')" :href="route('show-project', { project: route().params.project })" :active="route().current('show-project', { project: route().params.project })">
+                                Settings
                             </jet-responsive-nav-link>
 
                         </template>

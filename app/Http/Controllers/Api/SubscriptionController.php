@@ -47,28 +47,40 @@ class SubscriptionController extends Controller
             //  Set the start date
             $start_at = Carbon::now();
 
-            //  Set the end date
-            if( $subscriptionPlan->frequency == 'Years' ){
+        //  Set the end date
+        if( $subscriptionPlan->frequency == 'Years' ){
 
-                $end_at = Carbon::now()->addYears( $subscriptionPlan->duration );
+            $end_at = Carbon::now()->addYears( $subscriptionPlan->duration );
 
-            }elseif( $subscriptionPlan->frequency == 'Months' ){
+        }elseif( $subscriptionPlan->frequency == 'Months' ){
 
-                $end_at = Carbon::now()->addMonths( $subscriptionPlan->duration );
+            $end_at = Carbon::now()->addMonths( $subscriptionPlan->duration );
 
-            }elseif( $subscriptionPlan->frequency == 'Weeks' ){
+        }elseif( $subscriptionPlan->frequency == 'Weeks' ){
 
-                $end_at = Carbon::now()->addWeeks( $subscriptionPlan->duration );
+            $end_at = Carbon::now()->addWeeks( $subscriptionPlan->duration );
 
-            }elseif( $subscriptionPlan->frequency == 'Days' ){
+        }elseif( $subscriptionPlan->frequency == 'Days' ){
 
-                $end_at = Carbon::now()->addDays( $subscriptionPlan->duration );
+            $end_at = Carbon::now()->addDays( $subscriptionPlan->duration );
 
-            }else{
+        }elseif( $subscriptionPlan->frequency == 'Hours' ){
 
-                $end_at = Carbon::now()->addDay();
+            $end_at = Carbon::now()->addHours( $subscriptionPlan->duration );
 
-            }
+        }elseif( $subscriptionPlan->frequency == 'Minutes' ){
+
+            $end_at = Carbon::now()->addMinutes( $subscriptionPlan->duration );
+
+        }elseif( $subscriptionPlan->frequency == 'Seconds' ){
+
+            $end_at = Carbon::now()->addSeconds( $subscriptionPlan->duration );
+
+        }else{
+
+            $end_at = Carbon::now()->addDay();
+
+        }
 
             //  Create new subscription
             $subscription = Subscription::create([

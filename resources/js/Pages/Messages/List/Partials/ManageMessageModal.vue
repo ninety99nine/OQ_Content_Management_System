@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <div>
+            <div v-if="$inertia.page.props.projectPermissions.includes('Manage messages')">
                 <jet-button @click="openModal()" class="w-fit float-right">Add Message</jet-button>
                 <div class="clear-both"></div>
             </div>

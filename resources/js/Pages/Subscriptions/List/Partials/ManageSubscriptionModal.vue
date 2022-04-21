@@ -2,7 +2,7 @@
 
     <div>
 
-        <div v-if="showAddbutton" class="grid grid-cols-2 gap-4">
+        <div v-if="$inertia.page.props.projectPermissions.includes('Manage subscriptions') && showAddbutton" class="grid grid-cols-2 gap-4">
 
             <div class="bg-gray-50 pt-3 pl-6 border-b rounded-t">
                 <div class="text-sm text-gray-500 my-2">

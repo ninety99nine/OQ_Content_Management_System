@@ -65,8 +65,8 @@
                                     {{ subscriptionPlan.created_at == null ? '...' : moment(subscriptionPlan.created_at).fromNow() }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" @click.prevent="showModal(subscriptionPlan, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                    <a href="#" @click.prevent="showModal(subscriptionPlan, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('Manage subscription plans')" href="#" @click.prevent="showModal(subscriptionPlan, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('Manage subscription plans')" href="#" @click.prevent="showModal(subscriptionPlan, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
                                 </td>
                             </tr>
 
@@ -122,7 +122,7 @@
 
                 if( duration == 1 ){
 
-                    return duration +' '+ frequency.substring(-1);
+                    frequency = frequency.slice(0, -1);
 
                 }
 

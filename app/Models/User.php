@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Pivots\ProjectUserAsTeamMember;
+use App\Traits\Models\UserTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -17,6 +19,7 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use UserTrait;
 
     /**
      * The attributes that should be cast.
@@ -51,11 +54,15 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the projects that this user is linked to
+     *  Get the Projects that have been assigned to this User as a team member
+     *
+     *  @return Illuminate\Database\Eloquent\Concerns\HasRelationships::belongsToMany
      */
-    public function projects()
+    public function projectsAsTeamMember()
     {
-        return $this->belongsToMany(Project::class, 'user_projects');
+        return $this->belongsToMany(Project::class, 'user_projects', 'user_id', 'project_id')
+                    ->withPivot(ProjectUserAsTeamMember::VISIBLE_COLUMNS)
+                    ->using(ProjectUserAsTeamMember::class);
     }
 
     /**

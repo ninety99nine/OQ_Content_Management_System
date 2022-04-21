@@ -21,21 +21,22 @@ class CreateCampaignsTable extends Migration
             $table->string('description', 500)->nullable();
 
             $table->enum('schedule_type', Campaign::SCHEDULE_TYPE)->default(Arr::first(Campaign::SCHEDULE_TYPE));
-            $table->unsignedInteger('recurring_duration');
-            $table->string('recurring_frequency');
+            $table->unsignedInteger('recurring_duration')->nullable();
+            $table->string('recurring_frequency')->nullable();
 
-            $table->enum('content_to_send', Campaign::CONTENT_TO_SEND)->default(Arr::last(Campaign::CONTENT_TO_SEND));
-            $table->json('message_id_cascade')->nullable();
+            $table->enum('message_to_send', Campaign::MESSAGE_TO_SEND)->default(Arr::last(Campaign::MESSAGE_TO_SEND));
+            $table->json('message_ids');
 
             $table->boolean('has_start_date')->default(false);
-            $table->timestamp('start_date')->nullable();
+            $table->date('start_date')->nullable();
             $table->char('start_time', 5)->nullable();
 
             $table->boolean('has_end_date')->default(false);
-            $table->timestamp('end_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->char('end_time', 5)->nullable();
 
             $table->json('days_of_the_week')->nullable();
+
 
             $table->unsignedInteger('project_id');
             $table->timestamps();

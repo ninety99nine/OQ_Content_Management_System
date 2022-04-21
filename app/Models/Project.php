@@ -2,13 +2,26 @@
 
 namespace App\Models;
 
+use App\Models\Pivots\ProjectUserAsTeamMember;
+use App\Traits\Models\ProjectTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, ProjectTrait;
+
+    const PERMISSIONS = [
+        'View users', 'Manage users',
+        'View topics', 'Manage topics',
+        'View messages', 'Manage messages',
+        'View campaigns', 'Manage campaigns',
+        'View subscribers', 'Manage subscribers',
+        'View subscriptions', 'Manage subscriptions',
+        'View subscription plans', 'Manage subscription plans',
+        'View project settings', 'Manage project settings',
+    ];
 
     /**
      * The table associated with the model.
@@ -27,11 +40,15 @@ class Project extends Model
     protected $fillable = ['name', 'description', 'settings'];
 
     /**
-     * Get the users that this project is linked to
+     *  Get the Users that have been assigned to this Project as a team member
+     *
+     *  @return Illuminate\Database\Eloquent\Concerns\HasRelationships::belongsToMany
      */
     public function users()
     {
-        return $this->belongsToMany(User::class, 'user_projects');
+        return $this->belongsToMany(User::class, 'user_projects', 'project_id', 'user_id')
+                    ->withPivot(ProjectUserAsTeamMember::VISIBLE_COLUMNS)
+                    ->using(ProjectUserAsTeamMember::class);
     }
 
     /**

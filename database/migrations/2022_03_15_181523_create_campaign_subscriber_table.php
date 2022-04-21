@@ -18,7 +18,11 @@ class CreateCampaignSubscriberTable extends Migration
             $table->foreignId('project_id');
             $table->foreignId('campaign_id')->nullable();
             $table->foreignId('subscriber_id')->nullable();
+            $table->datetime('next_message_date')->nullable();
+            $table->unsignedSmallInteger('sent_sms_count')->default(1);
             $table->timestamps();
+
+            $table->index(['campaign_id', 'subscriber_id']);
         });
     }
 

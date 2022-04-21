@@ -17,9 +17,11 @@ class CreateSubscriberMessagesTable extends Migration
             $table->id();
             $table->unsignedInteger('message_id')->nullable();
             $table->unsignedInteger('subscriber_id')->nullable();
-            $table->unsignedTinyInteger('sent_sms_count')->nullable();
+            $table->unsignedSmallInteger('sent_sms_count')->default(1);
             $table->unsignedInteger('project_id');
             $table->timestamps();
+
+            $table->index(['message_id', 'subscriber_id']);
         });
     }
 

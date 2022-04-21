@@ -83,6 +83,18 @@ class SubscriptionController extends Controller
 
             $end_at = Carbon::now()->addDays( $subscriptionPlan->duration );
 
+        }elseif( $subscriptionPlan->frequency == 'Hours' ){
+
+            $end_at = Carbon::now()->addHours( $subscriptionPlan->duration );
+
+        }elseif( $subscriptionPlan->frequency == 'Minutes' ){
+
+            $end_at = Carbon::now()->addMinutes( $subscriptionPlan->duration );
+
+        }elseif( $subscriptionPlan->frequency == 'Seconds' ){
+
+            $end_at = Carbon::now()->addSeconds( $subscriptionPlan->duration );
+
         }else{
 
             $end_at = Carbon::now()->addDay();
@@ -150,6 +162,18 @@ class SubscriptionController extends Controller
         }elseif( $subscriptionPlan->frequency == 'Days' ){
 
             $end_at = Carbon::now()->addDays( $subscriptionPlan->duration );
+
+        }elseif( $subscriptionPlan->frequency == 'Hours' ){
+
+            $end_at = Carbon::now()->addHours( $subscriptionPlan->duration );
+
+        }elseif( $subscriptionPlan->frequency == 'Minutes' ){
+
+            $end_at = Carbon::now()->addMinutes( $subscriptionPlan->duration );
+
+        }elseif( $subscriptionPlan->frequency == 'Seconds' ){
+
+            $end_at = Carbon::now()->addSeconds( $subscriptionPlan->duration );
 
         }else{
 

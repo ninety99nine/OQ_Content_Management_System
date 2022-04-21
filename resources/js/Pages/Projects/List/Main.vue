@@ -5,7 +5,7 @@
 
                 <create-project-modal :showAddbutton="true" />
 
-                <projects-content :projectsPayload="projectsPayload" :totalMessages="totalMessages" />
+                <projects-content :projectsPayload="projectsPayload" />
 
             </div>
         </div>

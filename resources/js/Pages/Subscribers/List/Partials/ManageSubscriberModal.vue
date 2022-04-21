@@ -3,7 +3,7 @@
     <div>
 
         <!-- Add Subscriber Button -->
-        <jet-button v-if="showAddbutton" @click="openModal()" class="float-right mb-6">
+        <jet-button v-if="$inertia.page.props.projectPermissions.includes('Manage subscribers') && showAddbutton" @click="openModal()" class="float-right mb-6">
             Add Subscriber
         </jet-button>
 

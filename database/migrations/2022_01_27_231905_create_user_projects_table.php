@@ -15,8 +15,9 @@ class CreateUserProjectsTable extends Migration
     {
         Schema::create('user_projects', function (Blueprint $table) {
             $table->id();
-            $table->unsignedInteger('user_id')->nullable();
+            $table->unsignedInteger('user_id');
             $table->unsignedInteger('project_id');
+            $table->json('permissions')->nullable();
             $table->timestamps();
         });
     }

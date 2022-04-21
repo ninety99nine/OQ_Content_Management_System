@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Project;
 use Inertia\Middleware;
+use Illuminate\Http\Request;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -36,8 +38,38 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $projectPermissions = [];
+
+        //  If the project is provided on the request
+        if( request()->project ) {
+
+            /**
+             *  Get the current authenticated user
+             *
+             *  @var User $user
+             */
+            $user = auth()->user();
+
+            /**
+             *  Get the current authenticated user's project matching the current project id
+             *
+             *  @var Project $project
+             */
+            $project = $user->projectsAsTeamMember()->where('project_id', request()->project->id)->first();
+
+            /**
+             *  Get the current authenticated user's project permissions
+             *
+             *  @var Project $project
+             */
+            $projectPermissions = $project->pivot->permissions;
+
+        }
+
         return array_merge(parent::share($request), [
-            //
+
+            'projectPermissions' => $projectPermissions
+
         ]);
     }
 }

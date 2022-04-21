@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Pivots\CampaignNextMessageSchedule;
+use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Models\CampaignTrait;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +12,7 @@ use Carbon\Carbon;
 
 class Campaign extends Model
 {
-    use HasFactory, CampaignTrait;
+    use HasFactory, CampaignTrait, HasEagerLimit;
 
     const SCHEDULE_TYPE = [
         'Send Now',
@@ -18,7 +20,7 @@ class Campaign extends Model
         'Send Recurring',
     ];
 
-    const CONTENT_TO_SEND = [
+    const MESSAGE_TO_SEND = [
         'Specific Message',
         'Any Message'
     ];
@@ -31,10 +33,10 @@ class Campaign extends Model
     protected $casts = [
         'start_date' => 'datetime:Y-m-d H:i:s',
         'end_date' => 'datetime:Y-m-d H:i:s',
-        'message_id_cascade' => 'array',
         'days_of_the_week' => 'array',
         'has_start_date' => 'boolean',
         'has_end_date' => 'boolean',
+        'message_ids' => 'array',
     ];
 
     /**
@@ -44,7 +46,7 @@ class Campaign extends Model
      */
     protected $fillable = [
         'name', 'description', 'schedule_type', 'recurring_duration', 'recurring_frequency',
-        'content_to_send', 'message_id_cascade', 'has_start_date', 'start_date',
+        'message_to_send', 'message_ids', 'has_start_date', 'start_date',
         'start_time','has_end_date', 'end_date', 'end_time',
         'days_of_the_week', 'project_id'
     ];
@@ -60,11 +62,23 @@ class Campaign extends Model
     /**
      * Get the subscribers associated with the campaign
      */
-    public function subscribers($ids = [])
+    public function subscribers()
     {
-        $query = $this->belongsToMany(Subscriber::class, 'campaign_subscriber');
-        $query = count($ids) ? $query->whereInPivot('subscriber_ids', $ids) : $query;
-        return $query;
+        return $this->belongsToMany(Subscriber::class, 'campaign_subscriber')
+                    ->withPivot(CampaignNextMessageSchedule::VISIBLE_COLUMNS)
+                    ->using(CampaignNextMessageSchedule::class);
+    }
+
+    /**
+     * Get the subscribers associated with the campaign who are ready to receive the next message.
+     * These are subscribers who have received content before and are ready to receive the next
+     * message because they have satisfied the campaign schedule pattern.
+     */
+    public function subscribersReadyForNextSms()
+    {
+        return $this->subscribers()
+                    ->whereNotNull('next_message_date')
+                    ->where('next_message_date', '<=', Carbon::now());
     }
 
     /**
@@ -74,9 +88,28 @@ class Campaign extends Model
      */
     public function subscribersNotReadyForNextSms()
     {
-        return $this->belongsToMany(Subscriber::class, 'campaign_next_message_schedule')->using(CampaignNextMessageSchedule::class)
-                    ->where('campaign_next_message_schedule.next_message_date', '>', Carbon::now())
-                    ->whereNotNull('campaign_next_message_schedule.next_message_date');
+        return $this->subscribers()
+                    ->whereNull('next_message_date')
+                    ->orWhere(function($query) {
+                        $query->whereNotNull('next_message_date')
+                              ->where('next_message_date', '>', Carbon::now());
+                    });
+    }
+
+    /**
+     * Get the campaign batch jobs associated with the campaign.
+     */
+    public function campaignBatchJobs()
+    {
+        return $this->belongsToMany(JobBatches::class, 'campaign_job_batches', 'campaign_id', 'job_batch_id');
+    }
+
+    /**
+     * Get the latest campaign batch job associated with the campaign.
+     */
+    public function latestCampaignBatchJob()
+    {
+        return $this->campaignBatchJobs()->latest()->limit(1);
     }
 
     /**

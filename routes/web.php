@@ -7,9 +7,12 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\TopicController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
+use App\Jobs\StartSmsCampaign;
+use App\Models\Campaign;
 use Inertia\Inertia;
 
 /*
@@ -23,15 +26,7 @@ use Inertia\Inertia;
 |
 */
 
-Route::get('/', function () {
-
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::redirect('/', '/login', 301);
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
@@ -43,50 +38,102 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
         Route::prefix('{project}')->group(function () {
 
-            Route::put('/', [ProjectController::class, 'update'])->name('update-project');
-            Route::delete('/', [ProjectController::class, 'delete'])->name('delete-project');
+            //  Project
+            Route::middleware(['project.permission:Manage project settings'])->group(function () {
+                Route::get('/', [ProjectController::class, 'show'])
+                        ->withoutMiddleware(['project.permission:Manage project settings'])
+                        ->middleware(['project.permission:View project settings'])
+                        ->name('show-project');
+                Route::put('/', [ProjectController::class, 'update'])->name('update-project');
+                Route::delete('/', [ProjectController::class, 'delete'])->name('delete-project');
+            });
+
+            //  Users
+            Route::prefix('users')->group(function () {
+                Route::get('/', [UserController::class, 'index'])->middleware(['project.permission:View users'])->name('users');
+                Route::post('/', [UserController::class, 'create'])->middleware(['project.permission:Manage users'])->name('create-user');
+
+                Route::prefix('{user}')->middleware(['project.permission:Manage users'])->group(function () {
+                    //  Route::get('/', [UserController::class, 'show'])->name('show-user');
+                    Route::put('/', [UserController::class, 'update'])->name('update-user');
+                    Route::delete('/', [UserController::class, 'delete'])->name('delete-user');
+                });
+            });
 
             //  Messages
             Route::prefix('messages')->group(function () {
-                Route::get('/', [MessageController::class, 'index'])->name('messages');
-                Route::post('/', [MessageController::class, 'create'])->name('create-message');
-                Route::prefix('{message}')->group(function () {
-                    Route::get('/', [MessageController::class, 'show'])->name('show-message');
+                Route::get('/', [MessageController::class, 'index'])->middleware(['project.permission:View messages'])->name('messages');
+                Route::post('/', [MessageController::class, 'create'])->middleware(['project.permission:Manage messages'])->name('create-message');
+
+                Route::prefix('{message}')->middleware(['project.permission:Manage messages'])->group(function () {
+                    Route::get('/', [MessageController::class, 'show'])
+                        ->withoutMiddleware(['project.permission:Manage messages'])
+                        ->middleware(['project.permission:View messages'])
+                        ->name('show-message');
                     Route::put('/', [MessageController::class, 'update'])->name('update-message');
                     Route::delete('/', [MessageController::class, 'delete'])->name('delete-message');
                 });
             });
 
             //  Campaigns
-            Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns');
-            Route::post('/campaigns', [CampaignController::class, 'create'])->name('create-campaign');
-            Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('update-campaign');
-            Route::delete('/campaigns/{campaign}', [CampaignController::class, 'delete'])->name('delete-campaign');
+            Route::prefix('campaigns')->group(function () {
+                Route::get('/', [CampaignController::class, 'index'])->middleware(['project.permission:View campaigns'])->name('campaigns');
+                Route::post('/', [CampaignController::class, 'create'])->middleware(['project.permission:Manage campaigns'])->name('create-campaign');
+
+                Route::prefix('{campaign}')->middleware(['project.permission:Manage campaigns'])->group(function () {
+                    Route::get('/', [CampaignController::class, 'show'])->name('show-campaign');
+                    Route::put('/', [CampaignController::class, 'update'])->name('update-campaign');
+                    Route::delete('/', [CampaignController::class, 'delete'])->name('delete-campaign');
+                    Route::get('/job-batches', [CampaignController::class, 'jobBatches'])
+                            ->withoutMiddleware(['project.permission:Manage campaigns'])
+                            ->middleware(['project.permission:View campaigns'])
+                            ->name('show-campaign-job-batches');
+                });
+            });
 
             //  Subscribers
-            Route::get('/subscribers', [SubscriberController::class, 'index'])->name('subscribers');
-            Route::post('/subscribers', [SubscriberController::class, 'create'])->name('create-subscriber');
-            Route::put('/subscribers/{subscriber}', [SubscriberController::class, 'update'])->name('update-subscriber');
-            Route::delete('/subscribers/{subscriber}', [SubscriberController::class, 'delete'])->name('delete-subscriber');
+            Route::prefix('subscribers')->group(function () {
+                Route::get('/', [SubscriberController::class, 'index'])->middleware(['project.permission:View subscribers'])->name('subscribers');
+                Route::post('/', [SubscriberController::class, 'create'])->middleware(['project.permission:Manage subscribers'])->name('create-subscriber');
+
+                Route::prefix('{subscriber}')->middleware(['project.permission:Manage subscribers'])->group(function () {
+                    Route::put('/', [SubscriberController::class, 'update'])->name('update-subscriber');
+                    Route::delete('/', [SubscriberController::class, 'delete'])->name('delete-subscriber');
+                });
+            });
 
             //  Subscriptions
-            Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions');
-            Route::post('/subscriptions', [SubscriptionController::class, 'create'])->name('create-subscription');
-            Route::put('/subscriptions/{subscription}', [SubscriptionController::class, 'update'])->name('update-subscription');
-            Route::delete('/subscriptions/{subscription}', [SubscriptionController::class, 'delete'])->name('delete-subscription');
+            Route::prefix('subscriptions')->group(function () {
+                Route::get('/', [SubscriptionController::class, 'index'])->middleware(['project.permission:View subscriptions'])->name('subscriptions');
+                Route::post('/', [SubscriptionController::class, 'create'])->middleware(['project.permission:Manage subscriptions'])->name('create-subscription');
+
+                Route::prefix('{subscription}')->middleware(['project.permission:Manage subscriptions'])->group(function () {
+                    Route::put('/', [SubscriptionController::class, 'update'])->name('update-subscription');
+                    Route::delete('/', [SubscriptionController::class, 'delete'])->name('delete-subscription');
+                });
+            });
 
             //  Subscription Plans
-            Route::get('/subscription-plans', [SubscriptionPlanController::class, 'index'])->name('subscription-plans');
-            Route::post('/subscription-plans', [SubscriptionPlanController::class, 'create'])->name('create-subscription-plan');
-            Route::put('/subscription-plans/{subscription_plan}', [SubscriptionPlanController::class, 'update'])->name('update-subscription-plan');
-            Route::delete('/subscription-plans/{subscription_plan}', [SubscriptionPlanController::class, 'delete'])->name('delete-subscription-plan');
+            Route::prefix('subscription-plans')->group(function () {
+                Route::get('/', [SubscriptionPlanController::class, 'index'])->middleware(['project.permission:View subscription plans'])->name('subscription-plans');
+                Route::post('/', [SubscriptionPlanController::class, 'create'])->middleware(['project.permission:Manage subscription plans'])->name('create-subscription-plan');
+
+                Route::prefix('{subscription_plan}')->middleware(['project.permission:Manage subscription plans'])->group(function () {
+                    Route::put('/{subscription_plan}', [SubscriptionPlanController::class, 'update'])->name('update-subscription-plan');
+                    Route::delete('/{subscription_plan}', [SubscriptionPlanController::class, 'delete'])->name('delete-subscription-plan');
+                });
+            });
 
             //  Topics
             Route::prefix('topics')->group(function () {
-                Route::get('/', [TopicController::class, 'index'])->name('topics');
-                Route::post('/', [TopicController::class, 'create'])->name('create-topic');
-                Route::prefix('{topic}')->group(function () {
-                    Route::get('/', [TopicController::class, 'show'])->name('show-topic');
+                Route::get('/', [TopicController::class, 'index'])->middleware(['project.permission:View topics'])->name('topics');
+                Route::post('/', [TopicController::class, 'create'])->middleware(['project.permission:Manage topics'])->name('create-topic');
+
+                Route::prefix('{topic}')->middleware(['project.permission:Manage topics'])->group(function () {
+                    Route::get('/', [TopicController::class, 'show'])
+                        ->withoutMiddleware(['project.permission:Manage topics'])
+                        ->middleware(['project.permission:View topics'])
+                        ->name('show-topic');
                     Route::put('/', [TopicController::class, 'update'])->name('update-topic');
                     Route::delete('/', [TopicController::class, 'delete'])->name('delete-topic');
                 });
@@ -99,7 +146,30 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 });
 
 
+Route::get('testing', function() {
 
+    //  return Campaign::find(1)->canStartSmsCampaign();
+    //  return Campaign::find(1)->nextCampaignSmsMessageDate();
+
+    //  Get the projects
+    $projects = \App\Models\Project::with('campaigns')->get();
+
+    //  Foreach project
+    foreach($projects as $project) {
+
+        /**
+         *  Foreach campaign
+         *  @var Campaign $campaign
+         */
+        foreach($project->campaigns as $campaign) {
+
+            StartSmsCampaign::dispatch($project, $campaign);
+
+        }
+
+    }
+
+});
 
 Route::get('/upload', function(){
 

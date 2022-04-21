@@ -64,8 +64,8 @@
                                     {{ subscription.created_at == null ? '...' : moment(subscription.created_at).fromNow() }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" @click.prevent="showModal(subscription, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                    <a href="#" @click.prevent="showModal(subscription, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('Manage subscriptions')" href="#" @click.prevent="showModal(subscription, 'update')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                    <a v-if="$inertia.page.props.projectPermissions.includes('Manage subscriptions')" href="#" @click.prevent="showModal(subscription, 'delete')" class="text-red-600 hover:text-red-900">Delete</a>
                                 </td>
                             </tr>
 
@@ -110,6 +110,7 @@
         },
         data() {
             return {
+                refreshContentInterval: null,
                 isShowingModal: false,
                 modalAction: null,
                 subscription: null,
@@ -117,6 +118,10 @@
             }
         },
         methods: {
+            refreshContent()
+            {
+                this.$inertia.reload();
+            },
             showModal(subscription, action){
                 this.subscription = subscription;
                 this.modalAction = action;
@@ -128,7 +133,25 @@
                 }
 
                 return 0;
+            },
+            cleanUp()
+            {
+                clearInterval( this.refreshContentInterval );
+                this.refreshContentInterval = null;
             }
+        },
+        created() {
+
+            //  Keep refreshing this page content every 3 seconds
+            this.refreshContentInterval = setInterval(function() {
+                this.refreshContent();
+            }.bind(this), 3000);
+        },
+        unmounted() {
+            this.cleanUp()
+        },
+        destroyed() {
+            this.cleanUp()
         }
     })
 </script>
