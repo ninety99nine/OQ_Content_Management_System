@@ -159,9 +159,6 @@
         },
         unmounted() {
             this.cleanUp()
-        },
-        destroyed() {
-            this.cleanUp()
         }
     })
 </script>
