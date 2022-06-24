@@ -46,8 +46,6 @@ class Kernel extends ConsoleKernel
 
             $schedule->call(function () {
 
-                info('schedule->call');
-
                 //  Get the projects that have campaigns
                 $projects = Project::has('campaigns')->with(['campaigns' => function($query) {
 
@@ -56,12 +54,8 @@ class Kernel extends ConsoleKernel
 
                 }])->get();
 
-                info('Total projects: '. count($projects));
-
                 //  Foreach project
                 foreach($projects as $project) {
-
-                    info('hasSmsCredentials:'. ($project->hasSmsCredentials() ? 'Yes' : 'No'));
 
                     //  If this project does not have the sms credentials then do not run any campaigns
                     if( $project->hasSmsCredentials() == false ) return;
@@ -71,8 +65,6 @@ class Kernel extends ConsoleKernel
                      *  @var Campaign $campaign
                      */
                     foreach($project->campaigns as $campaign) {
-
-                        info('Campaign ID:'. $campaign->id);
 
                         /**
                          *  It appears that the eager loaded withCount('campaignBatchJobs')

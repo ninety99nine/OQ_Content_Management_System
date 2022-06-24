@@ -34,8 +34,6 @@ class SendSubscriptionSms implements ShouldQueue
      */
     public function __construct(Subscriber $subscriber, Message $message, Campaign $campaign, $sender, $username, $password)
     {
-        info('Dispatch: SendSubscriptionSms - construct()');
-
         $this->subscriber = $subscriber->withoutRelations();
         $this->campaign = $campaign;
         $this->username = $username;
@@ -51,8 +49,6 @@ class SendSubscriptionSms implements ShouldQueue
      */
     public function handle()
     {
-        info('Dispatch: SendSubscriptionSms - handle()');
-
         //  Send the daily message to the subscriber
         try {
 
